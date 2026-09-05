@@ -6,7 +6,7 @@ const http = require("node:http");
 const { rutaCache } = require("./transcodificar");
 
 const fsPromesas = fs.promises;
-const VERSION_SERVIDOR = "0.3.0";
+const VERSION_SERVIDOR = "0.4.0";
 
 const TIPOS_VIDEO = {
   ".mp4": "video/mp4",
@@ -31,6 +31,38 @@ function responderJson(respuesta, estado, contenido) {
     "Referrer-Policy": "no-referrer"
   });
   respuesta.end(cuerpo);
+}
+
+function leerJson(solicitud, limite) {
+  const maximo = limite || 32768;
+  return new Promise(function (resolve, reject) {
+    let cuerpo = "";
+    solicitud.setEncoding("utf8");
+    solicitud.on("data", function (fragmento) {
+      cuerpo += fragmento;
+      if (cuerpo.length > maximo) reject(new Error("SOLICITUD_DEMASIADO_GRANDE"));
+    });
+    solicitud.on("end", function () {
+      if (!cuerpo) { resolve({}); return; }
+      try { resolve(JSON.parse(cuerpo)); } catch (error) { reject(new Error("JSON_NO_VALIDO")); }
+    });
+    solicitud.on("error", reject);
+  });
+}
+
+function decidirEstrategiaTv(pelicula, capacidades) {
+  const video = String(pelicula.codecVideo || "").toLowerCase();
+  const audio = String(pelicula.codecAudio || "").toLowerCase();
+  const extension = String(pelicula.extension || "").toLowerCase();
+  const videos = new Set((capacidades.videoCodecs || []).map(function (v) { return String(v).toLowerCase(); }));
+  const audios = new Set((capacidades.audioCodecs || []).map(function (v) { return String(v).toLowerCase(); }));
+  const contenedores = new Set((capacidades.contenedores || []).map(function (v) { return String(v).toLowerCase(); }));
+  const codecsConocidos = Boolean(video && audio && videos.size && audios.size);
+  if (!codecsConocidos || (videos.has(video) && audios.has(audio))) {
+    if (!contenedores.size || contenedores.has(extension)) return "direct_play";
+    return "remux";
+  }
+  return "transcode";
 }
 
 function cabeceraArchivo(nombre, descarga) {
@@ -180,7 +212,7 @@ function autorizado(solicitud, configuracion) {
   return secretosIguales(clave, configuracion.claveAdministracion);
 }
 
-function crearServidorApi(configuracion, gestorCatalogo, registro, gestorTranscodificacion, lanzadorVlc) {
+function crearServidorApi(configuracion, gestorCatalogo, registro, gestorTranscodificacion, lanzadorVlc, gestorJellyfin) {
   const log = registro || console;
   const tickets = crearTickets(configuracion);
   return http.createServer(async function (solicitud, respuesta) {
@@ -221,7 +253,8 @@ function crearServidorApi(configuracion, gestorCatalogo, registro, gestorTransco
         return;
       }
       if (url.pathname === "/api/catalogo" || url.pathname === "/api/escanear" ||
-          url.pathname.startsWith("/api/medios/") || url.pathname.startsWith("/api/vlc/")) {
+          url.pathname.startsWith("/api/medios/") || url.pathname.startsWith("/api/vlc/") ||
+          url.pathname.startsWith("/api/tv/reproducir/")) {
         if (!autorizado(solicitud, configuracion)) {
           responderJson(respuesta, 401, { error: "Acceso no autorizado" });
           return;
@@ -250,6 +283,46 @@ function crearServidorApi(configuracion, gestorCatalogo, registro, gestorTransco
         const enlaceLocal = `http://127.0.0.1:${configuracion.puerto}/_gmm/medio/${ticket.token}`;
         lanzadorVlc.abrir(enlaceLocal);
         responderJson(respuesta, 200, { abierto: true });
+        return;
+      }
+      if (solicitud.method === "POST" && url.pathname.startsWith("/api/tv/reproducir/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/tv/reproducir/".length));
+        const pelicula = gestorCatalogo.obtenerArchivo && gestorCatalogo.obtenerArchivo(id);
+        if (!pelicula) { responderJson(respuesta, 404, { error: "Película no disponible" }); return; }
+        const cuerpo = await leerJson(solicitud);
+        const capacidades = cuerpo.capacidades || {};
+        const estrategia = decidirEstrategiaTv(pelicula, capacidades);
+        if (estrategia === "direct_play") {
+          const ticket = tickets.emitir(id, false, false, true);
+          responderJson(respuesta, 200, { estrategia, ruta: `/_gmm/medio/${ticket.token}`, expiraEn: new Date(ticket.expiraEn).toISOString() });
+          return;
+        }
+        if (!gestorTranscodificacion) {
+          responderJson(respuesta, 409, { error: "FFMPEG_NO_CONFIGURADO", estrategia });
+          return;
+        }
+        const lista = await gestorTranscodificacion.archivoListo(pelicula);
+        if (!lista) {
+          const trabajo = gestorTranscodificacion.solicitar(Object.assign({}, pelicula, {
+            compatibilidad: estrategia === "remux" ? "remux" : "transcodificar"
+          }));
+          if (trabajo.estado === "error") {
+            if (cuerpo.permitirJellyfin && gestorJellyfin && gestorJellyfin.buscarEquivalente) {
+              const alternativa = gestorJellyfin.buscarEquivalente(pelicula);
+              if (alternativa) {
+                const ticket = tickets.emitir(alternativa.id, false, false, false);
+                responderJson(respuesta, 200, { estrategia: "jellyfin", ruta: `/_gmm/jellyfin/${ticket.token}` });
+                return;
+              }
+            }
+            responderJson(respuesta, 500, { error: "NO_SE_PUDO_CONVERTIR", estrategia, mensaje: trabajo.error });
+            return;
+          }
+          responderJson(respuesta, 202, { estado: trabajo.estado, estrategia, reintentarEnMs: 1500 });
+          return;
+        }
+        const ticket = tickets.emitir(id, false, true, false);
+        responderJson(respuesta, 200, { estrategia, ruta: `/_gmm/medio/${ticket.token}`, expiraEn: new Date(ticket.expiraEn).toISOString() });
         return;
       }
       if (solicitud.method === "GET" && url.pathname.startsWith("/api/medios/")) {
@@ -359,6 +432,14 @@ function crearServidorApi(configuracion, gestorCatalogo, registro, gestorTransco
         await responderArchivo(solicitud, respuesta, peliculaCacheada, ticket.descarga);
         return;
       }
+      if (solicitud.method === "GET" && url.pathname.startsWith("/_gmm/jellyfin/")) {
+        const token = url.pathname.slice("/_gmm/jellyfin/".length);
+        const ticket = tickets.consumir(token);
+        const pelicula = ticket && gestorJellyfin && gestorJellyfin.obtenerArchivo(ticket.id);
+        if (!pelicula) { responderJson(respuesta, 410, { error: "El enlace alternativo caducó" }); return; }
+        await gestorJellyfin.responderMedio(solicitud, respuesta, pelicula, { original: false });
+        return;
+      }
       responderJson(respuesta, 404, { error: "Ruta no encontrada" });
     } catch (error) {
       log.error("Fallo atendiendo una solicitud de GMM Server:", error);
@@ -375,5 +456,6 @@ module.exports = {
   esDireccionLocal,
   origenPermitido,
   rangoSolicitado,
+  decidirEstrategiaTv,
   secretosIguales
 };

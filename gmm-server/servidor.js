@@ -25,33 +25,36 @@ function direccionesAlcanzables(host, puerto) {
 
 async function iniciar() {
   const configuracion = cargarConfiguracion(process.argv[2]);
-  const gestor = configuracion.jellyfin.activo
-    ? new GestorJellyfin(configuracion)
-    : new GestorCatalogo(configuracion);
+  const gestor = new GestorCatalogo(configuracion);
   await gestor.iniciar();
 
-  if (!configuracion.jellyfin.activo && configuracion.escanearAlIniciar) {
+  if (configuracion.escanearAlIniciar) {
     const catalogo = await gestor.escanearConfirmando();
     console.log(`Catálogo revisado: ${catalogo.resumen.total} película(s).`);
   }
 
-  const transcodificador = configuracion.jellyfin.activo
-    ? null
-    : new GestorTranscodificacion(configuracion, { registro: console });
-  const servidor = crearServidorApi(configuracion, gestor, console, transcodificador, new LanzadorVlc());
+  const transcodificador = new GestorTranscodificacion(configuracion, { registro: console });
+  let jellyfin = null;
+  if (configuracion.jellyfin.activo) {
+    jellyfin = new GestorJellyfin(configuracion);
+    try { await jellyfin.iniciar(); } catch (error) {
+      console.warn(`Jellyfin no está disponible; GMM continuará como motor principal: ${error.message}`);
+      jellyfin = null;
+    }
+  }
+  const servidor = crearServidorApi(configuracion, gestor, console, transcodificador, new LanzadorVlc(), jellyfin);
   servidor.listen(configuracion.puerto, configuracion.host, function () {
     console.log(`GMM Server ${VERSION_SERVIDOR} está funcionando.`);
     direccionesAlcanzables(configuracion.host, configuracion.puerto).forEach(function (direccion) {
       console.log(`Dirección: ${direccion}`);
     });
-    console.log(configuracion.jellyfin.activo
-      ? `Motor multimedia: Jellyfin (${configuracion.jellyfin.url})`
-      : `Carpetas configuradas: ${configuracion.carpetas.length}`);
+    console.log(`Motor principal: GMM / Te la tengo (${configuracion.carpetas.length} carpeta(s))`);
+    console.log(jellyfin ? `Respaldo opcional: Jellyfin (${configuracion.jellyfin.url})` : "Respaldo Jellyfin: desactivado");
     console.log("Pulsa Ctrl+C para detenerlo.");
   });
 
   let temporizador = null;
-  if (!configuracion.jellyfin.activo && configuracion.intervaloEscaneoMinutos > 0) {
+  if (configuracion.intervaloEscaneoMinutos > 0) {
     temporizador = setInterval(function () {
       gestor.escanear().catch(function (error) {
         console.error("No se pudo actualizar el catálogo:", error.message);

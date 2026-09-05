@@ -164,7 +164,9 @@ function catalogoPublico(catalogo) {
         /* null = no se pudo analizar con ffprobe (no instalado, o aún no escaneado con esta
            versión); "compatible" = se sirve tal cual; "remux"/"transcodificar" = necesita
            GMM.servidor -> transcodificar.js antes de reproducirse en el navegador. */
-        compatibilidad: pelicula.compatibilidad || null
+        compatibilidad: pelicula.compatibilidad || null,
+        codecVideo: pelicula.codecVideo || null,
+        codecAudio: pelicula.codecAudio || null
       };
     })
   };

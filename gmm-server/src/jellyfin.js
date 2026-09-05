@@ -146,6 +146,22 @@ class GestorJellyfin {
     return this.porId.get(id) || null;
   }
 
+  buscarEquivalente(pelicula) {
+    const tmdb = pelicula && pelicula.tmdb && Number(pelicula.tmdb.id);
+    if (tmdb) {
+      const porTmdb = Array.from(this.porId.values()).find(function (item) {
+        return item.tmdb && Number(item.tmdb.id) === tmdb;
+      });
+      if (porTmdb) return porTmdb;
+    }
+    const titulo = String(pelicula && pelicula.tituloDetectado || "").trim().toLocaleLowerCase("es");
+    const anio = Number(pelicula && pelicula.anioDetectado) || null;
+    return Array.from(this.porId.values()).find(function (item) {
+      return String(item.tituloDetectado || "").trim().toLocaleLowerCase("es") === titulo &&
+        (!anio || !item.anioDetectado || Number(item.anioDetectado) === anio);
+    }) || null;
+  }
+
   async responderMedio(solicitud, respuesta, pelicula, opciones) {
     const original = Boolean(opciones && (opciones.original || opciones.descarga));
     const extension = original ? pelicula.extension : ".mp4";
