@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════
+#  NUNCA PUBLICAR — datos privados
+#  El repositorio es PÚBLICO. Todo lo de aquí abajo se queda en
+#  local. Si alguna vez editas este archivo, no toques este bloque.
+# ═══════════════════════════════════════════════════════════════
+PRIVADO/
+*.local
+*.local.*
+.env
+.env.*
+secretos*
+credenciales*
+clave*.txt
+*.key
+*.pem
+
+# La aplicacion no tiene dependencias. Esto es solo de las pruebas.
+pruebas/node_modules/
+
+# Capturas que genera pruebas/interfaz.js
+pruebas/capturas/
+
+# GMM Server: dependencias y datos generados en este PC
+gmm-server/node_modules/
+gmm-server/PRIVADO/
+gmm-server/*.log
+
+# GMM Server: artefactos compilados. Se generan desde la fuente y se adjuntan
+# a GitHub Releases; no se versionan dentro del arbol de codigo.
+gmm-server/build/salida/
+GMM-Server-para-instalar/
+
+# Copia histórica local previa; la fuente activa vive en la raíz
+Por Codex/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archivo historico local: nunca se modifica ni se publica
+obsoleto/
+
+# Artefactos generados: se reconstruyen o se adjuntan a GitHub Releases
+*.bak

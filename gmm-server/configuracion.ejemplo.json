@@ -1,0 +1,23 @@
+{
+  "nombreServidor": "GMM Server de Alberto",
+  "host": "127.0.0.1",
+  "puerto": 7399,
+  "claveAdministracion": "SE_GENERA_AL_PREPARAR",
+  "jellyfinUrl": "",
+  "jellyfinClaveApi": "",
+  "carpetas": [
+    {
+      "nombre": "Peliculas",
+      "ruta": "D:\\Peliculas"
+    }
+  ],
+  "origenesPermitidos": [
+    "https://alberthoma.github.io",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080"
+  ],
+  "escanearAlIniciar": true,
+  "intervaloEscaneoMinutos": 0,
+  "duracionEnlaceMinutos": 10,
+  "rutaCatalogo": "catalogo.json"
+}

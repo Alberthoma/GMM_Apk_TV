@@ -1,0 +1,28 @@
+// Reglas de seguridad de Firestore para el proyecto de Firebase `givemymovies-x`.
+//
+// ESTE ARCHIVO NO SE APLICA SOLO. Es una copia de referencia versionada en git
+// para no volver a perder las reglas correctas. Firestore solo obedece a lo que
+// esté PUBLICADO a mano en la consola de Firebase:
+//   console.firebase.google.com  →  givemymovies-x  →  Firestore Database  →
+//   pestaña «Reglas»  →  pegar esto  →  «Publicar».
+//
+// Qué hacen: cada usuario autenticado solo puede leer y escribir SU PROPIO
+// documento en la colección `usuarios` (el que lleva su uid). Nadie puede tocar
+// el de otro, y el resto de colecciones quedan cerradas por defecto. Es justo lo
+// que GMM.cuenta necesita para sincronizar Mis listas (favoritas/pendientes),
+// guardadas en `usuarios/{uid}` — ver §4 «La cuenta…» y §6 de CLAUDE.md.
+//
+// Sin estas reglas publicadas, la app funciona igual pero las listas NO viajan
+// entre dispositivos: Firestore rechaza cada lectura/escritura con
+// `permission-denied` (desde V GMM 0031 la app lo avisa en pantalla en vez de
+// callarlo).
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usuarios/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

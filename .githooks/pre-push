@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Este proyecto solo se publica en GMM_Apk_TV. Bloquea un push si alguien
+# cambia por error la URL del remoto local, incluso aunque la documentación
+# siga indicando el destino correcto.
+remote_url="$2"
+
+case "$remote_url" in
+  https://github.com/Alberthoma/GMM_Apk_TV.git|https://github.com/Alberthoma/GMM_Apk_TV|git@github.com:Alberthoma/GMM_Apk_TV.git)
+    exit 0
+    ;;
+  *)
+    echo "PUBLICACION BLOQUEADA: destino incorrecto: $remote_url" >&2
+    echo "Destino permitido: https://github.com/Alberthoma/GMM_Apk_TV.git" >&2
+    exit 1
+    ;;
+esac

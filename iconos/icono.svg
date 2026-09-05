@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Icono de givemymovies. Reproduce la marca de la cabecera:
+       cuadrado redondeado con el degradado verde -> azul -> naranja
+       y el triángulo de reproducción en el azul profundo del fondo. -->
+  <defs>
+    <linearGradient id="marca" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#2ee6a8"/>
+      <stop offset="52%"  stop-color="#4aa8ff"/>
+      <stop offset="100%" stop-color="#ff8a3d"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" rx="114" ry="114" fill="url(#marca)"/>
+
+  <!-- Triángulo de play, centrado ópticamente (algo desplazado a la
+       derecha, porque su centro de masa cae a la izquierda). -->
+  <path d="M203 148 L378 256 L203 364 Z" fill="#06131c" stroke="#06131c"
+        stroke-width="34" stroke-linejoin="round"/>
+</svg>

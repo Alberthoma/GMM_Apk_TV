@@ -1,0 +1,17 @@
+{
+  "name": "gmm-server",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Servidor multimedia personal de GiveMyMovies",
+  "main": "servidor.js",
+  "scripts": {
+    "configurar": "node preparar.js",
+    "escanear": "node escanear.js",
+    "start": "node servidor.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}
