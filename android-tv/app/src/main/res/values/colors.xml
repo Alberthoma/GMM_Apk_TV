@@ -1,0 +1,7 @@
+<resources>
+    <color name="gmm_background">#090B10</color>
+    <color name="gmm_surface">#171B25</color>
+    <color name="gmm_primary">#F5C451</color>
+    <color name="gmm_text">#F7F7F8</color>
+    <color name="gmm_muted">#A7ADBA</color>
+</resources>

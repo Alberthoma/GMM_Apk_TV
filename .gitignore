@@ -41,5 +41,10 @@ desktop.ini
 # Archivo historico local: nunca se modifica ni se publica
 obsoleto/
 
+# Android TV: archivos locales y artefactos reproducibles
+android-tv/.gradle/
+android-tv/local.properties
+android-tv/**/build/
+
 # Artefactos generados: se reconstruyen o se adjuntan a GitHub Releases
 *.bak

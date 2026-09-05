@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.GmmTv" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorAccent">@color/gmm_primary</item>
+        <item name="android:navigationBarColor">@color/gmm_background</item>
+        <item name="android:windowBackground">@color/gmm_background</item>
+    </style>
+</resources>

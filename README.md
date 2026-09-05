@@ -7,6 +7,7 @@ y conectarse con GMM Server para reproducir copias personales.
 
 - La PWA se sirve desde `index.html`, `manifest.json` y `sw.js`.
 - GMM Server y sus pruebas estan en `gmm-server/`.
+- La aplicación nativa para TV está en `android-tv/`; su guía de instalación y pruebas está en `android-tv/README.md`.
 - Las pruebas de la aplicacion estan en `pruebas/`.
 - Las decisiones tecnicas vigentes estan resumidas en `PROJECT.md`.
 
