@@ -4,7 +4,7 @@
     Asistente de instalacion para lo que le falta a GMM: Node.js 22 o superior
     (sin el que GMM Server no arranca), FFmpeg y FFprobe (para los videos que
     el navegador no soporta tal cual), Tailscale (acceso privado) y Jellyfin
-    Server (motor multimedia). Comprueba que hace falta, instala lo posible
+    Server (respaldo multimedia opcional). Comprueba que hace falta, instala lo posible
     (via winget), y para lo que no se puede automatizar (iniciar sesion en
     Tailscale, instalar la app en el movil) abre la pagina correcta y
     explica el paso siguiente.
@@ -106,7 +106,7 @@ $forma.FormBorderStyle = "FixedDialog"
 $forma.MaximizeBox = $false
 
 $etiquetaIntro = New-Object System.Windows.Forms.Label
-$etiquetaIntro.Text = "Prepara este PC para GMM: Node.js, FFmpeg/FFprobe, Tailscale y Jellyfin Server."
+$etiquetaIntro.Text = "Prepara este PC para GMM: Node.js, FFmpeg/FFprobe, Tailscale y Jellyfin opcional."
 $etiquetaIntro.Location = New-Object System.Drawing.Point(20, 15)
 $etiquetaIntro.Size = New-Object System.Drawing.Size(510, 40)
 $forma.Controls.Add($etiquetaIntro)
@@ -224,7 +224,7 @@ $grupoTailscale.Controls.Add($etiquetaTailscaleMovil)
 
 # ---- Grupo Jellyfin ----
 $grupoJellyfin = New-Object System.Windows.Forms.GroupBox
-$grupoJellyfin.Text = "Jellyfin Server (motor multimedia recomendado)"
+$grupoJellyfin.Text = "Jellyfin Server (respaldo opcional; GMM funciona sin el)"
 $grupoJellyfin.Location = New-Object System.Drawing.Point(20, 485)
 $grupoJellyfin.Size = New-Object System.Drawing.Size(510, 110)
 $forma.Controls.Add($grupoJellyfin)

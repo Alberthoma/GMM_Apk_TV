@@ -413,8 +413,8 @@ $botonAyuda.Add_Click({
 # acceder desde fuera de casa. El punto verde/rojo evita tener que adivinar si
 # el fallo esta en GMM Server, Jellyfin o Tailscale.
 $etiquetaJellyfinEstado = New-Object System.Windows.Forms.Label
-$etiquetaJellyfinEstado.Text = "● Jellyfin desconectado"
-$etiquetaJellyfinEstado.ForeColor = [System.Drawing.Color]::Firebrick
+$etiquetaJellyfinEstado.Text = "● Jellyfin opcional"
+$etiquetaJellyfinEstado.ForeColor = [System.Drawing.Color]::DimGray
 $etiquetaJellyfinEstado.Location = New-Object System.Drawing.Point(20, 96)
 $etiquetaJellyfinEstado.Size = New-Object System.Drawing.Size(175, 24)
 $forma.Controls.Add($etiquetaJellyfinEstado)
@@ -586,8 +586,8 @@ function Refrescar-Interfaz {
 
 function Refrescar-ServiciosExternos {
     $jellyfinOk = Jellyfin-Conectado
-    $etiquetaJellyfinEstado.Text = if ($jellyfinOk) { "● Jellyfin conectado" } else { "● Jellyfin desconectado" }
-    $etiquetaJellyfinEstado.ForeColor = if ($jellyfinOk) { [System.Drawing.Color]::SeaGreen } else { [System.Drawing.Color]::Firebrick }
+    $etiquetaJellyfinEstado.Text = if ($jellyfinOk) { "● Jellyfin disponible" } else { "● Jellyfin opcional" }
+    $etiquetaJellyfinEstado.ForeColor = if ($jellyfinOk) { [System.Drawing.Color]::SeaGreen } else { [System.Drawing.Color]::DimGray }
     $botonEncenderJellyfin.Text = if ($jellyfinOk) { "Jellyfin encendido" } else { "Encender Jellyfin" }
     $botonEncenderJellyfin.Enabled = -not $jellyfinOk
 
@@ -605,11 +605,7 @@ function Iniciar-Servidor {
 
     if ($script:config.jellyfinUrl -and -not (Jellyfin-Conectado)) {
         Refrescar-ServiciosExternos
-        Escribir-Registro "No se puede iniciar: Jellyfin esta desconectado. Pulsa Encender Jellyfin y espera a que el indicador se ponga verde."
-        [System.Windows.Forms.MessageBox]::Show(
-            "Jellyfin esta desconectado. Pulsa Encender Jellyfin, espera a que el indicador se ponga verde y vuelve a iniciar el servidor.",
-            "GMM Server", "OK", "Warning") | Out-Null
-        return
+        Escribir-Registro "Jellyfin esta apagado; GMM iniciara normalmente y usara Te la tengo como motor principal."
     }
 
     $info = New-Object System.Diagnostics.ProcessStartInfo
