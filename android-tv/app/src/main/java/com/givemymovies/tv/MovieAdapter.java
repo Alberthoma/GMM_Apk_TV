@@ -30,8 +30,8 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
         card.setClickable(true);
         card.setBackgroundResource(R.drawable.focus_card);
         card.setForeground(parent.getContext().getDrawable(R.drawable.focus_poster));
-        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(dp(parent, 220), dp(parent, 330));
-        lp.setMargins(dp(parent, 10), dp(parent, 10), dp(parent, 10), dp(parent, 10));
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(parent, 290));
+        lp.setMargins(dp(parent, 8), dp(parent, 10), dp(parent, 8), dp(parent, 10));
         card.setLayoutParams(lp);
 
         ImageView poster = new ImageView(parent.getContext());
@@ -70,7 +70,7 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
         });
         holder.itemView.setOnClickListener(v -> listener.onPlay(movie));
         holder.itemView.setOnFocusChangeListener((v, focused) -> {
-            v.animate().scaleX(focused ? 1.06f : 1f).scaleY(focused ? 1.06f : 1f).setDuration(120).start();
+            v.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f).setDuration(120).start();
             v.setElevation(focused ? dp(v, 14) : dp(v, 2));
         });
     }

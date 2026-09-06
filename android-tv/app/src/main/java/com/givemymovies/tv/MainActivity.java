@@ -32,7 +32,7 @@ public final class MainActivity extends AppCompatActivity {
         Button settings = new Button(this); settings.setText("Ajustes"); settings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class))); header.addView(settings);
         root.addView(header);
         status = new TextView(this); status.setTextColor(Color.rgb(167,173,186)); status.setTextSize(17); status.setText("Conectando con GMM Server…"); root.addView(status);
-        RecyclerView list = new RecyclerView(this); list.setClipToPadding(false); list.setPadding(0, dp(16), 0, dp(16)); list.setLayoutManager(new GridLayoutManager(this, 5));
+        RecyclerView list = new RecyclerView(this); list.setClipToPadding(false); list.setPadding(dp(12), dp(16), dp(12), dp(16)); list.setLayoutManager(new GridLayoutManager(this, 4));
         adapter = new MovieAdapter(this::play); list.setAdapter(adapter); root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
     }
