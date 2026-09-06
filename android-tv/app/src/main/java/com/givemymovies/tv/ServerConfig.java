@@ -18,6 +18,9 @@ final class ServerConfig {
     }
 
     static ServerConfig load(Context context) {
+        if (!BuildConfig.DEFAULT_SERVER_URL.isEmpty() && !BuildConfig.DEFAULT_SERVER_KEY.isEmpty()) {
+            return new ServerConfig(BuildConfig.DEFAULT_SERVER_URL, BuildConfig.DEFAULT_SERVER_KEY, false);
+        }
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         return new ServerConfig(prefs.getString("base_url", "http://100.64.0.1:7399"),
                 prefs.getString("key", ""), prefs.getBoolean("jellyfin_fallback", true));

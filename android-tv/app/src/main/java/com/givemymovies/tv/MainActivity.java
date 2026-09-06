@@ -32,7 +32,7 @@ public final class MainActivity extends AppCompatActivity {
         Button settings = new Button(this); settings.setText("Ajustes"); settings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class))); header.addView(settings);
         root.addView(header);
         status = new TextView(this); status.setTextColor(Color.rgb(167,173,186)); status.setTextSize(17); status.setText("Conectando con GMM Server…"); root.addView(status);
-        RecyclerView list = new RecyclerView(this); list.setClipToPadding(false); list.setPadding(0, dp(16), 0, dp(16)); list.setLayoutManager(new GridLayoutManager(this, 4));
+        RecyclerView list = new RecyclerView(this); list.setClipToPadding(false); list.setPadding(0, dp(16), 0, dp(16)); list.setLayoutManager(new GridLayoutManager(this, 5));
         adapter = new MovieAdapter(this::play); list.setAdapter(adapter); root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
     }
@@ -52,5 +52,5 @@ public final class MainActivity extends AppCompatActivity {
     }
     private void play(Movie movie) { startActivity(new Intent(this, PlayerActivity.class).putExtra("movie_id", movie.id).putExtra("title", movie.title)); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
-    @Override protected void onDestroy() { executor.shutdownNow(); super.onDestroy(); }
+    @Override protected void onDestroy() { executor.shutdownNow(); if (adapter != null) adapter.close(); super.onDestroy(); }
 }

@@ -43,6 +43,9 @@ obsoleto/
 
 # Android TV: archivos locales y artefactos reproducibles
 android-tv/.gradle/
+android-tv/.gradle-user-home/
+android-tv/.android-user-home/
+android-tv/.toolchain/
 android-tv/local.properties
 android-tv/**/build/
 

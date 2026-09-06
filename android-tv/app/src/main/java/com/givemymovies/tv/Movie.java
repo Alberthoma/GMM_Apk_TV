@@ -8,6 +8,7 @@ final class Movie {
     final String year;
     final String fileName;
     final String compatibility;
+    String posterUrl;
 
     Movie(JSONObject json) {
         id = json.optString("id");
@@ -16,5 +17,10 @@ final class Movie {
         year = value > 0 ? String.valueOf(value) : "";
         fileName = json.optString("nombreArchivo");
         compatibility = json.optString("compatibilidad", "desconocida");
+        JSONObject tmdb = json.optJSONObject("tmdb");
+        if (tmdb != null) {
+            String path = tmdb.optString("poster_path", "");
+            if (!path.isEmpty()) posterUrl = "https://image.tmdb.org/t/p/w500" + path;
+        }
     }
 }
