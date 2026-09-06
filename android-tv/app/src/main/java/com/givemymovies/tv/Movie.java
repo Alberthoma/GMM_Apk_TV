@@ -1,6 +1,11 @@
 package com.givemymovies.tv;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+import java.text.Normalizer;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 final class Movie {
     final String id;
@@ -9,6 +14,10 @@ final class Movie {
     final String fileName;
     final String compatibility;
     String posterUrl;
+    String mediaType = "movie";
+    double rating;
+    final Set<Integer> genreIds = new HashSet<>();
+    boolean metadataReady;
 
     Movie(JSONObject json) {
         id = json.optString("id");
@@ -18,9 +27,37 @@ final class Movie {
         fileName = json.optString("nombreArchivo");
         compatibility = json.optString("compatibilidad", "desconocida");
         JSONObject tmdb = json.optJSONObject("tmdb");
-        if (tmdb != null) {
-            String path = tmdb.optString("poster_path", "");
-            if (!path.isEmpty()) posterUrl = "https://image.tmdb.org/t/p/w500" + path;
-        }
+        if (tmdb != null) applyMetadata(tmdb);
+    }
+
+    void applyMetadata(JSONObject json) {
+        String path = json.optString("poster_path", "");
+        if (!path.isEmpty() && !"null".equals(path)) posterUrl = path.startsWith("http") ? path : "https://image.tmdb.org/t/p/w500" + path;
+        mediaType = json.optString("media_type", json.optString("tipo", mediaType));
+        if (!"tv".equals(mediaType)) mediaType = "movie";
+        rating = json.optDouble("vote_average", json.optDouble("calificacion", 0));
+        genreIds.clear();
+        JSONArray genres = json.optJSONArray("genre_ids");
+        if (genres != null) for (int i = 0; i < genres.length(); i++) genreIds.add(genres.optInt(i));
+        metadataReady = true;
+    }
+
+    JSONObject metadataJson() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("poster_path", posterUrl == null ? "" : posterUrl);
+            json.put("media_type", mediaType);
+            json.put("vote_average", rating);
+            JSONArray genres = new JSONArray();
+            for (Integer id : genreIds) genres.put(id);
+            json.put("genre_ids", genres);
+        } catch (Exception ignored) {}
+        return json;
+    }
+
+    String matchKey() { return normalize(title) + "|" + year; }
+    static String normalize(String value) {
+        String text = Normalizer.normalize(value == null ? "" : value, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return text.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").trim();
     }
 }

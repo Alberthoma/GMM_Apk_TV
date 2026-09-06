@@ -4,6 +4,13 @@ Aplicación nativa para Android TV. Presenta el catálogo **Te la tengo**, se ma
 D-pad/OK/Back y usa Media3/ExoPlayer a pantalla completa. GMM Server es siempre el motor
 principal; Jellyfin solo se consulta como respaldo opcional.
 
+La interfaz de TV incluye encabezado GMM tipo cinta, cambio entre películas y series,
+búsqueda por título o actor/actriz, filtros de año, género y calificación, orden por fecha,
+alfabético o nota, y favoritas locales sin necesidad de cuenta. Mantén pulsado OK sobre una
+carátula para añadirla o quitarla de Favoritas. TMDB completa y guarda localmente los datos
+necesarios durante la primera indexación; los resultados siempre se limitan a los archivos
+que realmente existen en **Te la tengo**.
+
 ## Flujo de reproducción
 
 1. La app enumera los decodificadores reales del TV y envía sus capacidades a

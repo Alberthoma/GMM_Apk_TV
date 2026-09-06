@@ -18,10 +18,15 @@ import java.util.List;
 
 final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
     interface Listener { void onPlay(Movie movie); }
+    interface FavoriteListener { void onChanged(Movie movie, boolean favorite); }
     private final List<Movie> movies = new ArrayList<>();
     private final Listener listener;
-    private final PosterRepository posters = new PosterRepository();
-    MovieAdapter(Listener listener) { this.listener = listener; }
+    private final FavoriteListener favoriteListener;
+    private final PosterRepository posters;
+    private final FavoriteStore favorites;
+    MovieAdapter(Listener listener, FavoriteListener favoriteListener, PosterRepository posters, FavoriteStore favorites) {
+        this.listener = listener; this.favoriteListener = favoriteListener; this.posters = posters; this.favorites = favorites;
+    }
     void setMovies(List<Movie> values) { movies.clear(); movies.addAll(values); notifyDataSetChanged(); }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -43,6 +48,11 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
         gradient.setBackgroundResource(R.drawable.poster_gradient);
         card.addView(gradient, new FrameLayout.LayoutParams(-1, -1));
 
+        TextView star = new TextView(parent.getContext());
+        star.setTextColor(Color.rgb(245,196,81)); star.setTextSize(24); star.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams starParams = new FrameLayout.LayoutParams(dp(parent, 46), dp(parent, 46), Gravity.TOP | Gravity.END);
+        card.addView(star, starParams);
+
         LinearLayout labels = new LinearLayout(parent.getContext());
         labels.setOrientation(LinearLayout.VERTICAL);
         labels.setGravity(Gravity.BOTTOM);
@@ -53,14 +63,16 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
         meta.setTextColor(Color.rgb(215, 218, 225)); meta.setTextSize(13); meta.setPadding(0, dp(parent, 6), 0, 0);
         labels.addView(title); labels.addView(meta);
         card.addView(labels, new FrameLayout.LayoutParams(-1, -1));
-        return new Holder(card, poster, title, meta);
+        return new Holder(card, poster, title, meta, star);
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         Movie movie = movies.get(position);
         holder.boundId = movie.id;
         holder.title.setText(movie.title);
+        holder.star.setText(favorites.contains(movie.id) ? "★" : "");
         String meta = movie.year;
+        if (movie.rating > 0) meta += (meta.isEmpty() ? "" : "  •  ") + "★ " + String.format(java.util.Locale.US, "%.1f", movie.rating);
         if (!movie.compatibility.isEmpty()) meta += (meta.isEmpty() ? "" : "  •  ") + movie.compatibility;
         holder.meta.setText(meta);
         holder.poster.setImageDrawable(null);
@@ -69,6 +81,12 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
             holder.poster.setImageBitmap(image);
         });
         holder.itemView.setOnClickListener(v -> listener.onPlay(movie));
+        holder.itemView.setOnLongClickListener(v -> {
+            boolean favorite = favorites.toggle(movie.id);
+            holder.star.setText(favorite ? "★" : "");
+            favoriteListener.onChanged(movie, favorite);
+            return true;
+        });
         holder.itemView.setOnFocusChangeListener((v, focused) -> {
             v.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f).setDuration(120).start();
             v.setElevation(focused ? dp(v, 14) : dp(v, 2));
@@ -81,11 +99,10 @@ final class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.Holder> {
         super.onViewRecycled(holder);
     }
 
-    void close() { posters.close(); }
     @Override public int getItemCount() { return movies.size(); }
     private static int dp(View view, int value) { return Math.round(value * view.getResources().getDisplayMetrics().density); }
     static final class Holder extends RecyclerView.ViewHolder {
-        final ImageView poster; final TextView title; final TextView meta; String boundId;
-        Holder(View root, ImageView poster, TextView title, TextView meta) { super(root); this.poster = poster; this.title = title; this.meta = meta; }
+        final ImageView poster; final TextView title; final TextView meta; final TextView star; String boundId;
+        Holder(View root, ImageView poster, TextView title, TextView meta, TextView star) { super(root); this.poster = poster; this.title = title; this.meta = meta; this.star = star; }
     }
 }

@@ -12,8 +12,8 @@ android {
         applicationId 'com.givemymovies.tv'
         minSdk 23
         targetSdk 35
-        versionCode 4
-        versionName '1.0.3'
+        versionCode 5
+        versionName '1.1.0'
         buildConfigField 'String', 'DEFAULT_SERVER_URL', '"' + gmmDefaultUrl.replace('\\', '\\\\').replace('"', '\\"') + '"'
         buildConfigField 'String', 'DEFAULT_SERVER_KEY', '"' + gmmDefaultKey.replace('\\', '\\\\').replace('"', '\\"') + '"'
         buildConfigField 'String', 'TMDB_API_KEY', '"' + gmmTmdbKey.replace('\\', '\\\\').replace('"', '\\"') + '"'
