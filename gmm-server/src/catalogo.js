@@ -3,7 +3,7 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
-const { analizarNombreArchivo, esArchivoDeVideo } = require("./nombres");
+const { analizarNombreArchivo, analizarTipoVideo, esArchivoDeVideo } = require("./nombres");
 const { evaluarCompatibilidad, sondearArchivo } = require("./compatibilidad");
 
 const fsPromesas = fs.promises;
@@ -92,6 +92,7 @@ async function recorrerCarpeta(raiz, rutaActual, configuracion, encontrados, avi
       const estadisticas = await fsPromesas.stat(rutaCompleta);
       const relativa = path.relative(raiz.ruta, rutaCompleta);
       const nombre = analizarNombreArchivo(entrada.name);
+      const tipo = analizarTipoVideo(entrada.name, relativa, raiz.nombre);
       encontrados.push({
         id: identificadorArchivo(raiz.nombre, relativa),
         carpeta: raiz.nombre,
@@ -100,6 +101,10 @@ async function recorrerCarpeta(raiz, rutaActual, configuracion, encontrados, avi
         nombreArchivo: entrada.name,
         tituloDetectado: nombre.tituloDetectado,
         anioDetectado: nombre.anioDetectado,
+        tipoMedia: tipo.tipoMedia,
+        serieTitulo: tipo.serieTitulo,
+        temporada: tipo.temporada,
+        episodio: tipo.episodio,
         extension: nombre.extension,
         tamanoBytes: estadisticas.size,
         modificadoEn: estadisticas.mtime.toISOString(),
@@ -155,6 +160,10 @@ function catalogoPublico(catalogo) {
         nombreArchivo: pelicula.nombreArchivo,
         tituloDetectado: pelicula.tituloDetectado,
         anioDetectado: pelicula.anioDetectado,
+        tipoMedia: pelicula.tipoMedia || "movie",
+        serieTitulo: pelicula.serieTitulo || null,
+        temporada: pelicula.temporada || null,
+        episodio: pelicula.episodio || null,
         extension: pelicula.extension,
         tamanoBytes: pelicula.tamanoBytes,
         modificadoEn: pelicula.modificadoEn,

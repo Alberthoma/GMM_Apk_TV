@@ -6,7 +6,7 @@ const http = require("node:http");
 const { rutaCache } = require("./transcodificar");
 
 const fsPromesas = fs.promises;
-const VERSION_SERVIDOR = "0.4.0";
+const VERSION_SERVIDOR = "0.5.0";
 
 const TIPOS_VIDEO = {
   ".mp4": "video/mp4",

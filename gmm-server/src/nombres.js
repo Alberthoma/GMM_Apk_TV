@@ -53,4 +53,20 @@ function analizarNombreArchivo(nombreArchivo) {
   };
 }
 
-module.exports = { analizarNombreArchivo, esArchivoDeVideo, limpiarTitulo };
+function analizarTipoVideo(nombreArchivo, rutaRelativa, nombreRaiz) {
+  const extension = path.extname(String(nombreArchivo || ""));
+  const base = path.basename(String(nombreArchivo || ""), extension).replace(/[._]+/g, " ").replace(/\s+/g, " ").trim();
+  const episodio = /(?:^|\s)(?:s(\d{1,2})\s*e(\d{1,3})|(\d{1,2})x(\d{1,3})|temporada\s*(\d{1,2}).*?episodio\s*(\d{1,3}))(?:\s|$)/i.exec(base);
+  const raizSeries = /\b(?:series?|tv|television)\b/i.test(String(nombreRaiz || ""));
+  if (!episodio && !raizSeries) return { tipoMedia: "movie", serieTitulo: null, temporada: null, episodio: null };
+  const temporada = episodio ? Number(episodio[1] || episodio[3] || episodio[5]) : null;
+  const numero = episodio ? Number(episodio[2] || episodio[4] || episodio[6]) : null;
+  const relativa = String(rutaRelativa || "");
+  const partes = relativa.split(/[\\/]+/).filter(Boolean);
+  let serieTitulo = partes.length > 1 ? limpiarTitulo(partes[0]) : "";
+  if (!serieTitulo && episodio) serieTitulo = limpiarTitulo(base.slice(0, episodio.index));
+  if (!serieTitulo) serieTitulo = limpiarTitulo(base);
+  return { tipoMedia: "tv", serieTitulo, temporada, episodio: numero };
+}
+
+module.exports = { analizarNombreArchivo, analizarTipoVideo, esArchivoDeVideo, limpiarTitulo };

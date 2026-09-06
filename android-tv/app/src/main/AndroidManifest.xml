@@ -10,6 +10,7 @@
         android:label="GMM TV"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.GmmTv">
+        <activity android:name=".DetailsActivity" />
         <activity android:name=".PlayerActivity" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".MainActivity" android:exported="true">

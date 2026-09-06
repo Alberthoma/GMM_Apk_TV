@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { analizarNombreArchivo, esArchivoDeVideo } = require("../src/nombres");
+const { analizarNombreArchivo, analizarTipoVideo, esArchivoDeVideo } = require("../src/nombres");
 
 test("extrae título y año de un nombre técnico", function () {
   const resultado = analizarNombreArchivo("Spider-Man.No.Way.Home.2021.1080p.BluRay.x264.mkv");
@@ -32,4 +32,14 @@ test("retira la etiqueta Año que precede al año numérico", function () {
 test("reconoce extensiones sin depender de mayúsculas", function () {
   assert.equal(esArchivoDeVideo("Pelicula.MP4", [".mp4", ".mkv"]), true);
   assert.equal(esArchivoDeVideo("caratula.jpg", [".mp4", ".mkv"]), false);
+});
+
+test("reconoce temporada y episodio por nombre y carpeta", function () {
+  assert.deepEqual(analizarTipoVideo("Foundation.S02E03.1080p.mkv", "Foundation\\Temporada 2\\Foundation.S02E03.1080p.mkv", "Series"), {
+    tipoMedia: "tv", serieTitulo: "Foundation", temporada: 2, episodio: 3
+  });
+});
+
+test("conserva como película un archivo sin marcadores de serie", function () {
+  assert.equal(analizarTipoVideo("Dune Part Two (2024).mkv", "Dune Part Two (2024).mkv", "Peliculas").tipoMedia, "movie");
 });

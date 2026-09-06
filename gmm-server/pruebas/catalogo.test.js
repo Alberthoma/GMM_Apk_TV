@@ -131,3 +131,20 @@ test("si no se pudo sondear, vuelve a intentarlo en el siguiente escaneo en vez 
   await gestor.escanear();
   assert.equal(sondeos, 4, "sin ffmpeg instalado, cada escaneo debe reintentar el sondeo");
 });
+
+test("publica serie, temporada y episodio sin revelar la ruta", async function (t) {
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), "gmm-series-"));
+  const series = path.join(base, "Series");
+  await fs.mkdir(path.join(series, "Foundation", "Temporada 2"), { recursive: true });
+  await fs.writeFile(path.join(series, "Foundation", "Temporada 2", "Foundation.S02E03.mkv"), "video");
+  t.after(async function () { await fs.rm(base, { recursive: true, force: true }); });
+  const config = configuracion(base, series); config.carpetas[0].nombre = "Series";
+  const gestor = new GestorCatalogo(config, { sondear: async function () { return { codecVideo: "h264", codecAudio: "aac" }; } });
+  await gestor.iniciar(); await gestor.escanear();
+  const catalogo = await gestor.escanear();
+  assert.equal(catalogo.peliculas[0].tipoMedia, "tv");
+  assert.equal(catalogo.peliculas[0].serieTitulo, "Foundation");
+  assert.equal(catalogo.peliculas[0].temporada, 2);
+  assert.equal(catalogo.peliculas[0].episodio, 3);
+  assert.equal(JSON.stringify(catalogo).includes(series), false);
+});

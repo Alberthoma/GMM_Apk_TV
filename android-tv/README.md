@@ -11,6 +11,13 @@ carátula para añadirla o quitarla de Favoritas. TMDB completa y guarda localme
 necesarios durante la primera indexación; los resultados siempre se limitan a los archivos
 que realmente existen en **Te la tengo**.
 
+La versión 1.2 añade una ficha antes de reproducir, continuar desde la última posición,
+historial de reproducidos recientemente, búsqueda de títulos por voz, filtro para mostrar
+solo Direct Play y selectores de audio y subtítulos. Durante el vídeo, mantén pulsada la
+flecha izquierda o derecha para retroceder o avanzar continuamente. El servidor reconoce
+series organizadas en carpetas y episodios nombrados `S02E03`, `2x03` o con las palabras
+Temporada/Episodio.
+
 ## Flujo de reproducción
 
 1. La app enumera los decodificadores reales del TV y envía sus capacidades a

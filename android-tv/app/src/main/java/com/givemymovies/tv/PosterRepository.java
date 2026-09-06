@@ -107,7 +107,7 @@ final class PosterRepository {
 
     private JSONObject find(Movie movie) {
         try {
-            JSONObject response = getJson("/search/multi?language=es-ES&include_adult=false&query=" + encode(movie.title));
+            JSONObject response = getJson("/search/multi?language=es-ES&include_adult=false&query=" + encode(movie.searchTitle()));
             JSONArray results = response.optJSONArray("results");
             JSONObject best = null;
             int bestScore = -1;
@@ -119,7 +119,8 @@ final class PosterRepository {
                 String title = candidate.optString("title", candidate.optString("name", ""));
                 String date = candidate.optString("release_date", candidate.optString("first_air_date", ""));
                 String year = date.length() >= 4 ? date.substring(0, 4) : "";
-                int score = Movie.normalize(title).equals(Movie.normalize(movie.title)) ? 8 : 1;
+                int score = Movie.normalize(title).equals(Movie.normalize(movie.searchTitle())) ? 8 : 1;
+                if (movie.serverClassified && "tv".equals(type)) score += 8;
                 if (!movie.year.isEmpty() && movie.year.equals(year)) score += 5;
                 if (score > bestScore) { best = candidate; bestScore = score; }
             }

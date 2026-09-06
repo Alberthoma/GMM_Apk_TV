@@ -3,6 +3,7 @@ package com.givemymovies.tv;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.speech.RecognizerIntent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -48,9 +50,11 @@ public final class MainActivity extends AppCompatActivity {
     private MovieAdapter adapter;
     private PosterRepository posters;
     private FavoriteStore favorites;
+    private PlaybackStore playback;
     private TextView status;
     private Button mediaButton;
     private Button favoritesButton;
+    private Button recentButton;
     private Set<String> actorKeys;
     private boolean destroyed;
 
@@ -59,6 +63,7 @@ public final class MainActivity extends AppCompatActivity {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         posters = new PosterRepository(this);
         favorites = new FavoriteStore(this);
+        playback = new PlaybackStore(this);
         loadFilters();
 
         LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(dp(36), dp(20), dp(36), dp(16)); root.setBackgroundColor(Color.rgb(9,11,16));
@@ -98,8 +103,10 @@ public final class MainActivity extends AppCompatActivity {
         mediaButton = button("tv".equals(filters.mediaType) ? "Series" : "Películas"); mediaButton.setOnClickListener(v -> { filters.mediaType = "movie".equals(filters.mediaType) ? "tv" : "movie"; mediaButton.setText("tv".equals(filters.mediaType) ? "Series" : "Películas"); applyFilters(); });
         favoritesButton = button(filters.favoritesOnly ? "★ Favoritas" : "☆ Favoritas"); favoritesButton.setOnClickListener(v -> { filters.favoritesOnly = !filters.favoritesOnly; favoritesButton.setText(filters.favoritesOnly ? "★ Favoritas" : "☆ Favoritas"); applyFilters(); });
         Button filter = button("⌕  Buscar y filtrar"); filter.setOnClickListener(v -> showFilters());
-        Button clear = button("Limpiar"); clear.setOnClickListener(v -> { filters.clear(); actorKeys = null; mediaButton.setText("Películas"); favoritesButton.setText("☆ Favoritas"); applyFilters(); });
-        bar.addView(favoritesButton); bar.addView(filter); bar.addView(mediaButton); bar.addView(clear);
+        Button voice = button("🎙 Voz"); voice.setOnClickListener(v -> startVoiceSearch());
+        recentButton = button(filters.recentOnly ? "● Recientes" : "○ Recientes"); recentButton.setOnClickListener(v -> { filters.recentOnly = !filters.recentOnly; recentButton.setText(filters.recentOnly ? "● Recientes" : "○ Recientes"); applyFilters(); });
+        Button clear = button("Limpiar"); clear.setOnClickListener(v -> { filters.clear(); actorKeys = null; mediaButton.setText("Películas"); favoritesButton.setText("☆ Favoritas"); recentButton.setText("○ Recientes"); applyFilters(); });
+        bar.addView(favoritesButton); bar.addView(recentButton); bar.addView(filter); bar.addView(voice); bar.addView(mediaButton); bar.addView(clear);
         return bar;
     }
 
@@ -108,7 +115,7 @@ public final class MainActivity extends AppCompatActivity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(50)); lp.setMargins(dp(5), 0, dp(5), 0); value.setLayoutParams(lp); return value;
     }
 
-    @Override protected void onResume() { super.onResume(); if (catalog.isEmpty()) load(); }
+    @Override protected void onResume() { super.onResume(); if (catalog.isEmpty()) load(); else applyFilters(); }
     private void load() {
         status.setText("Conectando con GMM Server…"); ServerConfig config = ServerConfig.load(this);
         executor.execute(() -> {
@@ -137,9 +144,13 @@ public final class MainActivity extends AppCompatActivity {
     private void applyFilters() {
         List<Movie> result = new ArrayList<>();
         String query = Movie.normalize(filters.title);
+        List<String> recentOrder = filters.recentOnly ? playback.recentIds() : Collections.emptyList();
+        Set<String> recentIds = filters.recentOnly ? new HashSet<>(recentOrder) : Collections.emptySet();
         for (Movie movie : catalog) {
             if (!filters.mediaType.equals(movie.mediaType)) continue;
             if (filters.favoritesOnly && !favorites.contains(movie.id)) continue;
+            if (filters.recentOnly && !recentIds.contains(movie.id)) continue;
+            if (filters.directOnly && !CodecCapabilities.supportsDirectPlay(movie)) continue;
             if (!query.isEmpty() && !Movie.normalize(movie.title).contains(query)) continue;
             int year = number(movie.year);
             if (filters.yearFrom > 0 && year < filters.yearFrom) continue;
@@ -154,7 +165,8 @@ public final class MainActivity extends AppCompatActivity {
             result.add(movie);
         }
         Comparator<Movie> comparator;
-        if (filters.order == 1) comparator = (a,b) -> Integer.compare(number(b.year), number(a.year));
+        if (filters.recentOnly) comparator = Comparator.comparingInt(value -> recentOrder.indexOf(value.id));
+        else if (filters.order == 1) comparator = (a,b) -> Integer.compare(number(b.year), number(a.year));
         else if (filters.order == 2) comparator = (a,b) -> Integer.compare(number(a.year), number(b.year));
         else if (filters.order == 3) comparator = (a,b) -> Double.compare(b.rating, a.rating);
         else comparator = (a,b) -> a.title.compareToIgnoreCase(b.title);
@@ -175,15 +187,17 @@ public final class MainActivity extends AppCompatActivity {
         Spinner genre = spinner(GENRES, indexOf(GENRE_IDS, filters.genreId)); panel.addView(genre);
         Spinner rating = spinner(RATINGS, Math.max(0, filters.minRating - 4)); panel.addView(rating);
         Spinner order = spinner(ORDERS, filters.order); panel.addView(order);
+        CheckBox direct = new CheckBox(this); direct.setText("Mostrar solamente Direct Play"); direct.setTextColor(Color.WHITE); direct.setTextSize(17); direct.setChecked(filters.directOnly); direct.setPadding(dp(8), dp(8), dp(8), dp(8)); panel.addView(direct);
         LinearLayout actions = new LinearLayout(this); actions.setGravity(Gravity.END);
         Button cancel = button("Cancelar"); Button apply = button("Aplicar filtros"); actions.addView(cancel); actions.addView(apply); panel.addView(actions);
-        linkFocus(titleInput, actorInput, from, to, genre, rating, order, apply);
+        linkFocus(titleInput, actorInput, from, to, genre, rating, order, direct, apply);
         cancel.setOnClickListener(v -> dialog.dismiss());
         apply.setOnClickListener(v -> {
             filters.title = titleInput.getText().toString().trim(); filters.actor = actorInput.getText().toString().trim();
             filters.yearFrom = number(from.getText().toString()); filters.yearTo = number(to.getText().toString());
             if (filters.yearFrom > 0 && filters.yearTo == 0) filters.yearTo = filters.yearFrom;
             filters.genreId = GENRE_IDS[genre.getSelectedItemPosition()]; filters.minRating = rating.getSelectedItemPosition() == 0 ? 0 : rating.getSelectedItemPosition() + 4; filters.order = order.getSelectedItemPosition();
+            filters.directOnly = direct.isChecked();
             actorKeys = filters.actor.isEmpty() ? null : new HashSet<>(); dialog.dismiss();
             if (!filters.actor.isEmpty()) { status.setText("Buscando trabajos de " + filters.actor + "…"); posters.searchActor(filters.actor, keys -> { actorKeys = keys; applyFilters(); }); }
             else applyFilters();
@@ -209,20 +223,28 @@ public final class MainActivity extends AppCompatActivity {
     private void loadFilters() {
         SharedPreferences p = getSharedPreferences("gmm_tv_filters", MODE_PRIVATE);
         filters.title=p.getString("title", ""); filters.actor=p.getString("actor", ""); filters.mediaType=p.getString("type", "movie");
-        filters.yearFrom=p.getInt("from", 0); filters.yearTo=p.getInt("to", 0); filters.genreId=p.getInt("genre", 0); filters.minRating=p.getInt("rating", 0); filters.order=p.getInt("order", 0); filters.favoritesOnly=p.getBoolean("favorites", false);
+        filters.yearFrom=p.getInt("from", 0); filters.yearTo=p.getInt("to", 0); filters.genreId=p.getInt("genre", 0); filters.minRating=p.getInt("rating", 0); filters.order=p.getInt("order", 0); filters.favoritesOnly=p.getBoolean("favorites", false); filters.recentOnly=p.getBoolean("recent", false); filters.directOnly=p.getBoolean("direct", false);
     }
     private void saveFilters() {
         getSharedPreferences("gmm_tv_filters", MODE_PRIVATE).edit().putString("title", filters.title).putString("actor", filters.actor).putString("type", filters.mediaType)
-                .putInt("from", filters.yearFrom).putInt("to", filters.yearTo).putInt("genre", filters.genreId).putInt("rating", filters.minRating).putInt("order", filters.order).putBoolean("favorites", filters.favoritesOnly).apply();
+                .putInt("from", filters.yearFrom).putInt("to", filters.yearTo).putInt("genre", filters.genreId).putInt("rating", filters.minRating).putInt("order", filters.order).putBoolean("favorites", filters.favoritesOnly).putBoolean("recent", filters.recentOnly).putBoolean("direct", filters.directOnly).apply();
     }
     private static int number(String value) { try { return Integer.parseInt(value); } catch (Exception ignored) { return 0; } }
     private void favoriteChanged(Movie movie, boolean favorite) { Toast.makeText(this, favorite ? "Añadida a Favoritas" : "Quitada de Favoritas", Toast.LENGTH_SHORT).show(); if (filters.favoritesOnly) applyFilters(); }
-    private void play(Movie movie) { startActivity(new Intent(this, PlayerActivity.class).putExtra("movie_id", movie.id).putExtra("title", movie.title)); }
+    private void play(Movie movie) { startActivity(new Intent(this, DetailsActivity.class).putExtra("movie_id", movie.id).putExtra("title", movie.title).putExtra("year", movie.year).putExtra("rating", movie.rating).putExtra("poster", movie.posterUrl).putExtra("media_type", movie.mediaType).putExtra("compatibility", movie.compatibility)); }
+    private void startVoiceSearch() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH); intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM); intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es"); intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di el título que quieres buscar");
+        try { startActivityForResult(intent, 42); } catch (Exception error) { Toast.makeText(this, "El reconocimiento de voz no está disponible en este TV", Toast.LENGTH_LONG).show(); }
+    }
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 42 && resultCode == RESULT_OK && data != null) { ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS); if (results != null && !results.isEmpty()) { filters.title = results.get(0); filters.actor = ""; actorKeys = null; applyFilters(); Toast.makeText(this, "Buscando: " + filters.title, Toast.LENGTH_SHORT).show(); } }
+    }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     @Override protected void onDestroy() { destroyed = true; executor.shutdownNow(); if (posters != null) posters.close(); super.onDestroy(); }
 
     static final class FilterState {
-        String title = "", actor = "", mediaType = "movie"; int yearFrom, yearTo, genreId, minRating, order; boolean favoritesOnly;
-        void clear() { title = ""; actor = ""; mediaType = "movie"; yearFrom = yearTo = genreId = minRating = order = 0; favoritesOnly = false; }
+        String title = "", actor = "", mediaType = "movie"; int yearFrom, yearTo, genreId, minRating, order; boolean favoritesOnly, recentOnly, directOnly;
+        void clear() { title = ""; actor = ""; mediaType = "movie"; yearFrom = yearTo = genreId = minRating = order = 0; favoritesOnly = recentOnly = directOnly = false; }
     }
 }

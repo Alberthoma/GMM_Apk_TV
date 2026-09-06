@@ -11,7 +11,9 @@ import java.util.Locale;
 import java.util.Set;
 
 final class CodecCapabilities {
-    static JSONObject detect() {
+    private static JSONObject cached;
+    static synchronized JSONObject detect() {
+        if (cached != null) return cached;
         Set<String> video = new LinkedHashSet<>();
         Set<String> audio = new LinkedHashSet<>();
         for (MediaCodecInfo info : new MediaCodecList(MediaCodecList.ALL_CODECS).getCodecInfos()) {
@@ -28,6 +30,22 @@ final class CodecCapabilities {
             result.put("audioCodecs", new JSONArray(audio));
             result.put("contenedores", new JSONArray(new String[]{".mkv", ".mp4", ".m4v", ".webm", ".ts"}));
         } catch (Exception ignored) { }
+        cached = result;
+        return cached;
+    }
+
+    static boolean supportsDirectPlay(Movie movie) {
+        JSONObject detected = detect();
+        Set<String> videos = values(detected.optJSONArray("videoCodecs"));
+        Set<String> audios = values(detected.optJSONArray("audioCodecs"));
+        Set<String> containers = values(detected.optJSONArray("contenedores"));
+        boolean codecsKnown = !movie.codecVideo.isEmpty() && !movie.codecAudio.isEmpty() && !videos.isEmpty() && !audios.isEmpty();
+        return (!codecsKnown || (videos.contains(movie.codecVideo) && audios.contains(movie.codecAudio))) && (containers.isEmpty() || containers.contains(movie.extension));
+    }
+
+    private static Set<String> values(JSONArray array) {
+        Set<String> result = new LinkedHashSet<>();
+        if (array != null) for (int i=0; i<array.length(); i++) result.add(array.optString(i).toLowerCase(Locale.US));
         return result;
     }
 

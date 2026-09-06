@@ -69,6 +69,16 @@ if (-not $SoloServidor) {
 # ------------------------------------------------------------------
 
 Write-Output "Compilando GMM-Server.exe..."
+$rutaServidorSalida = Join-Path $carpetaSalida "GMM-Server.exe"
+if (Test-Path -LiteralPath $rutaServidorSalida) {
+    try {
+        $pruebaBloqueo = [System.IO.File]::Open($rutaServidorSalida, 'Open', 'ReadWrite', 'None')
+        $pruebaBloqueo.Dispose()
+    } catch {
+        $rutaServidorSalida = Join-Path $carpetaSalida "GMM-Server-nuevo.exe"
+        Write-Output "El servidor actual esta abierto; la actualizacion se guardara como GMM-Server-nuevo.exe."
+    }
+}
 $motor = @{
     '%LOCALAPPDATA%\GMM-Server\motor\servidor.js'                     = Join-Path $raizProyecto "servidor.js"
     '%LOCALAPPDATA%\GMM-Server\motor\preparar.js'                     = Join-Path $raizProyecto "preparar.js"
@@ -84,7 +94,7 @@ $motor = @{
 }
 Invoke-ps2exe `
     -inputFile (Join-Path $raizProyecto "GMM-Server-Panel.ps1") `
-    -outputFile (Join-Path $carpetaSalida "GMM-Server.exe") `
+    -outputFile $rutaServidorSalida `
     -noConsole `
     -x64 `
     -embedFiles $motor `

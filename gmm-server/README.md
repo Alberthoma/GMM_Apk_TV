@@ -20,6 +20,7 @@ Esta es la **fase 2** del proyecto:
 - configuración privada separada del repositorio;
 - escaneo recursivo de una o varias carpetas;
 - reconocimiento inicial del título y año desde el nombre del archivo;
+- clasificación de películas, series, temporadas y episodios (`S02E03`, `2x03` o carpetas Series/TV);
 - catálogo persistente y regenerable;
 - confirmación en dos revisiones antes de marcar disponible un archivo nuevo o modificado;
 - detección de discos o carpetas desconectados;
