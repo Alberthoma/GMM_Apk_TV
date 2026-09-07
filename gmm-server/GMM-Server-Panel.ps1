@@ -409,7 +409,7 @@ function Nueva-Tarjeta([int]$x, [int]$y, [int]$ancho, [int]$alto) {
 function Mostrar-GuiaGmm([string]$titulo = "Guia de inicio") {
     $modal = New-Object System.Windows.Forms.Form
     $modal.Text = $titulo
-    $modal.Size = New-Object System.Drawing.Size(620, 525)
+    $modal.Size = New-Object System.Drawing.Size(650, 600)
     $modal.StartPosition = "CenterParent"
     $modal.FormBorderStyle = "FixedDialog"
     $modal.MaximizeBox = $false
@@ -417,7 +417,7 @@ function Mostrar-GuiaGmm([string]$titulo = "Guia de inicio") {
     $modal.BackColor = $colorFondo
     $modal.ForeColor = $colorTexto
     $modal.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-    $modal.AutoScaleMode = "Dpi"
+    $modal.AutoScaleMode = "None"
 
     $cabecera = New-Object System.Windows.Forms.Label
     $cabecera.Text = "GMM SERVER  |  TE LA TENGO"
@@ -428,16 +428,16 @@ function Mostrar-GuiaGmm([string]$titulo = "Guia de inicio") {
     $modal.Controls.Add($cabecera)
 
     $mensaje = New-Object System.Windows.Forms.Label
-    $mensaje.Text = "ORDEN RECOMENDADO`n`n1. Añade una carpeta con tus películas o series. El servidor solo lee: nunca mueve ni borra archivos.`n`n2. Pulsa Iniciar servidor. GMM crea el catálogo y ya funciona en este PC sin Jellyfin.`n`n3. Copia la clave y usa http://127.0.0.1:7399 en GiveMyMovies de este PC.`n`n4. Para TV o móvil fuera de casa, conecta este PC y el dispositivo a Tailscale; luego activa HTTPS y copia esa dirección.`n`n5. Jellyfin es opcional: queda disponible solo como respaldo para contenido problemático.`n`nPuedes pulsar Escanear ahora después de añadir contenido nuevo, sin apagar el servidor."
+    $mensaje.Text = "ORDEN RECOMENDADO`n`n1. Añade una carpeta con tus películas o series. El servidor solo lee: nunca mueve ni borra archivos.`n`n2. Pulsa Iniciar servidor. GMM crea el catálogo y ya funciona en este PC sin Jellyfin.`n`n3. Cuando añadas contenido nuevo, pulsa Escanear ahora para actualizar el catálogo sin apagar el servidor.`n`n4. Para TV o móvil fuera de casa, conecta este PC y el dispositivo a Tailscale; luego pulsa Activar HTTPS con Tailscale y copia esa dirección.`n`n5. Copia la clave y usa http://127.0.0.1:7399 en GiveMyMovies de este PC.`n`nJellyfin es opcional: queda disponible solo como respaldo para contenido problemático."
     $mensaje.ForeColor = $colorTexto
     $mensaje.Location = New-Object System.Drawing.Point(28, 65)
-    $mensaje.Size = New-Object System.Drawing.Size(555, 355)
+    $mensaje.Size = New-Object System.Drawing.Size(585, 410)
     $mensaje.Font = New-Object System.Drawing.Font("Segoe UI", 10)
     $modal.Controls.Add($mensaje)
 
     $cerrar = New-Object System.Windows.Forms.Button
     $cerrar.Text = "Entendido"
-    $cerrar.Location = New-Object System.Drawing.Point(435, 432)
+    $cerrar.Location = New-Object System.Drawing.Point(465, 500)
     $cerrar.Size = New-Object System.Drawing.Size(140, 38)
     Aplicar-EstiloBoton $cerrar $true
     $cerrar.Add_Click({ $modal.Close() })
@@ -449,7 +449,7 @@ function Mostrar-GuiaGmm([string]$titulo = "Guia de inicio") {
 
 $forma = New-Object System.Windows.Forms.Form
 $forma.Text = "GMM Server · Te la tengo"
-$forma.Size = New-Object System.Drawing.Size(850, 870)
+$forma.Size = New-Object System.Drawing.Size(850, 930)
 $forma.StartPosition = "CenterScreen"
 $forma.FormBorderStyle = "FixedDialog"
 $forma.MaximizeBox = $false
@@ -491,18 +491,25 @@ Aplicar-EstiloBoton $botonAyuda $false
 $cabecera.Controls.Add($botonAyuda)
 $botonAyuda.Add_Click({ Mostrar-GuiaGmm })
 
-$pasos = Nueva-Tarjeta 22 128 790 78
+$pasos = Nueva-Tarjeta 22 128 790 102
 $pasosEtiqueta = New-Object System.Windows.Forms.Label
-$pasosEtiqueta.Text = "ORDEN DE USO     1  Añadir carpeta       2  Iniciar servidor       3  Conectar TV / móvil"
+$pasosEtiqueta.Text = "ORDEN DE USO     1  Añadir carpeta       2  Iniciar servidor"
 $pasosEtiqueta.Font = New-Object System.Drawing.Font("Segoe UI Semibold", 10)
 $pasosEtiqueta.ForeColor = $colorAzulClaro
 $pasosEtiqueta.Location = New-Object System.Drawing.Point(20, 12)
-$pasosEtiqueta.Size = New-Object System.Drawing.Size(745, 27)
+$pasosEtiqueta.Size = New-Object System.Drawing.Size(745, 25)
 $pasos.Controls.Add($pasosEtiqueta)
+$pasosPasoDos = New-Object System.Windows.Forms.Label
+$pasosPasoDos.Text = "3  Escanear contenido nuevo       4  Activar HTTPS con Tailscale (TV / móvil)"
+$pasosPasoDos.Font = New-Object System.Drawing.Font("Segoe UI Semibold", 9.5)
+$pasosPasoDos.ForeColor = $colorAzulClaro
+$pasosPasoDos.Location = New-Object System.Drawing.Point(20, 39)
+$pasosPasoDos.Size = New-Object System.Drawing.Size(745, 24)
+$pasos.Controls.Add($pasosPasoDos)
 $pasosDetalle = New-Object System.Windows.Forms.Label
 $pasosDetalle.Text = "Jellyfin no es necesario para usar GMM. Úsalo únicamente como respaldo opcional."
 $pasosDetalle.ForeColor = $colorSuave
-$pasosDetalle.Location = New-Object System.Drawing.Point(20, 44)
+$pasosDetalle.Location = New-Object System.Drawing.Point(20, 68)
 $pasosDetalle.Size = New-Object System.Drawing.Size(745, 25)
 $pasos.Controls.Add($pasosDetalle)
 
@@ -510,20 +517,20 @@ $etiquetaEstado = New-Object System.Windows.Forms.Label
 $etiquetaEstado.Text = "Detenido"
 $etiquetaEstado.ForeColor = $colorRojo
 $etiquetaEstado.Font = New-Object System.Drawing.Font("Segoe UI Semibold", 12)
-$etiquetaEstado.Location = New-Object System.Drawing.Point(24, 224)
+$etiquetaEstado.Location = New-Object System.Drawing.Point(24, 248)
 $etiquetaEstado.Size = New-Object System.Drawing.Size(470, 32)
 $forma.Controls.Add($etiquetaEstado)
 
 $botonIniciar = New-Object System.Windows.Forms.Button
 $botonIniciar.Text = "Iniciar servidor"
-$botonIniciar.Location = New-Object System.Drawing.Point(522, 220)
+$botonIniciar.Location = New-Object System.Drawing.Point(522, 244)
 $botonIniciar.Size = New-Object System.Drawing.Size(135, 42)
 Aplicar-EstiloBoton $botonIniciar $true
 $forma.Controls.Add($botonIniciar)
 
 $botonEscanear = New-Object System.Windows.Forms.Button
 $botonEscanear.Text = "Escanear ahora"
-$botonEscanear.Location = New-Object System.Drawing.Point(670, 220)
+$botonEscanear.Location = New-Object System.Drawing.Point(670, 244)
 $botonEscanear.Size = New-Object System.Drawing.Size(142, 42)
 $botonEscanear.Enabled = $false
 Aplicar-EstiloBoton $botonEscanear $false
@@ -535,14 +542,14 @@ $forma.Controls.Add($botonEscanear)
 $etiquetaJellyfinEstado = New-Object System.Windows.Forms.Label
 $etiquetaJellyfinEstado.Text = "● Jellyfin opcional"
 $etiquetaJellyfinEstado.ForeColor = [System.Drawing.Color]::DimGray
-$etiquetaJellyfinEstado.Location = New-Object System.Drawing.Point(24, 280)
+$etiquetaJellyfinEstado.Location = New-Object System.Drawing.Point(24, 304)
 $etiquetaJellyfinEstado.Size = New-Object System.Drawing.Size(190, 28)
 $etiquetaJellyfinEstado.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $forma.Controls.Add($etiquetaJellyfinEstado)
 
 $botonEncenderJellyfin = New-Object System.Windows.Forms.Button
 $botonEncenderJellyfin.Text = "Encender Jellyfin"
-$botonEncenderJellyfin.Location = New-Object System.Drawing.Point(220, 274)
+$botonEncenderJellyfin.Location = New-Object System.Drawing.Point(220, 298)
 $botonEncenderJellyfin.Size = New-Object System.Drawing.Size(160, 36)
 Aplicar-EstiloBoton $botonEncenderJellyfin $false
 $forma.Controls.Add($botonEncenderJellyfin)
@@ -550,20 +557,20 @@ $forma.Controls.Add($botonEncenderJellyfin)
 $etiquetaTailscaleEstado = New-Object System.Windows.Forms.Label
 $etiquetaTailscaleEstado.Text = "● Tailscale desconectado"
 $etiquetaTailscaleEstado.ForeColor = [System.Drawing.Color]::Firebrick
-$etiquetaTailscaleEstado.Location = New-Object System.Drawing.Point(616, 280)
+$etiquetaTailscaleEstado.Location = New-Object System.Drawing.Point(616, 304)
 $etiquetaTailscaleEstado.Size = New-Object System.Drawing.Size(195, 28)
 $etiquetaTailscaleEstado.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $forma.Controls.Add($etiquetaTailscaleEstado)
 
 $etiquetaClaveTit = New-Object System.Windows.Forms.Label
 $etiquetaClaveTit.Text = "Clave de administracion:"
-$etiquetaClaveTit.Location = New-Object System.Drawing.Point(24, 332)
+$etiquetaClaveTit.Location = New-Object System.Drawing.Point(24, 356)
 $etiquetaClaveTit.Size = New-Object System.Drawing.Size(300, 27)
 $etiquetaClaveTit.ForeColor = $colorTexto
 $forma.Controls.Add($etiquetaClaveTit)
 
 $campoClave = New-Object System.Windows.Forms.TextBox
-$campoClave.Location = New-Object System.Drawing.Point(24, 365)
+$campoClave.Location = New-Object System.Drawing.Point(24, 389)
 $campoClave.Size = New-Object System.Drawing.Size(650, 30)
 $campoClave.ReadOnly = $true
 $campoClave.BackColor = [System.Drawing.ColorTranslator]::FromHtml("#EDF4FA")
@@ -572,20 +579,20 @@ $forma.Controls.Add($campoClave)
 
 $botonCopiarClave = New-Object System.Windows.Forms.Button
 $botonCopiarClave.Text = "Copiar"
-$botonCopiarClave.Location = New-Object System.Drawing.Point(686, 363)
+$botonCopiarClave.Location = New-Object System.Drawing.Point(686, 387)
 $botonCopiarClave.Size = New-Object System.Drawing.Size(126, 34)
 Aplicar-EstiloBoton $botonCopiarClave $false
 $forma.Controls.Add($botonCopiarClave)
 
 $etiquetaCarpetas = New-Object System.Windows.Forms.Label
 $etiquetaCarpetas.Text = "Carpetas que escanea:"
-$etiquetaCarpetas.Location = New-Object System.Drawing.Point(24, 420)
+$etiquetaCarpetas.Location = New-Object System.Drawing.Point(24, 444)
 $etiquetaCarpetas.Size = New-Object System.Drawing.Size(320, 27)
 $etiquetaCarpetas.ForeColor = $colorTexto
 $forma.Controls.Add($etiquetaCarpetas)
 
 $listaCarpetas = New-Object System.Windows.Forms.ListView
-$listaCarpetas.Location = New-Object System.Drawing.Point(24, 453)
+$listaCarpetas.Location = New-Object System.Drawing.Point(24, 477)
 $listaCarpetas.Size = New-Object System.Drawing.Size(788, 120)
 $listaCarpetas.View = "Details"
 $listaCarpetas.FullRowSelect = $true
@@ -597,14 +604,14 @@ $forma.Controls.Add($listaCarpetas)
 
 $botonAnadirCarpeta = New-Object System.Windows.Forms.Button
 $botonAnadirCarpeta.Text = "Anadir carpeta..."
-$botonAnadirCarpeta.Location = New-Object System.Drawing.Point(24, 587)
+$botonAnadirCarpeta.Location = New-Object System.Drawing.Point(24, 611)
 $botonAnadirCarpeta.Size = New-Object System.Drawing.Size(190, 38)
 Aplicar-EstiloBoton $botonAnadirCarpeta $true
 $forma.Controls.Add($botonAnadirCarpeta)
 
 $botonQuitarCarpeta = New-Object System.Windows.Forms.Button
 $botonQuitarCarpeta.Text = "Quitar carpeta"
-$botonQuitarCarpeta.Location = New-Object System.Drawing.Point(226, 587)
+$botonQuitarCarpeta.Location = New-Object System.Drawing.Point(226, 611)
 $botonQuitarCarpeta.Size = New-Object System.Drawing.Size(170, 38)
 Aplicar-EstiloBoton $botonQuitarCarpeta $false
 $forma.Controls.Add($botonQuitarCarpeta)
@@ -612,20 +619,20 @@ $forma.Controls.Add($botonQuitarCarpeta)
 # ---- Acceso remoto seguro (HTTPS via Tailscale) ----
 $etiquetaHttpsTit = New-Object System.Windows.Forms.Label
 $etiquetaHttpsTit.Text = "Acceso remoto seguro (para el movil, fuera de casa):"
-$etiquetaHttpsTit.Location = New-Object System.Drawing.Point(24, 650)
+$etiquetaHttpsTit.Location = New-Object System.Drawing.Point(24, 674)
 $etiquetaHttpsTit.Size = New-Object System.Drawing.Size(580, 27)
 $etiquetaHttpsTit.ForeColor = $colorTexto
 $forma.Controls.Add($etiquetaHttpsTit)
 
 $botonActivarHttps = New-Object System.Windows.Forms.Button
 $botonActivarHttps.Text = "Activar HTTPS con Tailscale"
-$botonActivarHttps.Location = New-Object System.Drawing.Point(24, 684)
+$botonActivarHttps.Location = New-Object System.Drawing.Point(24, 708)
 $botonActivarHttps.Size = New-Object System.Drawing.Size(260, 38)
 Aplicar-EstiloBoton $botonActivarHttps $true
 $forma.Controls.Add($botonActivarHttps)
 
 $campoHttps = New-Object System.Windows.Forms.TextBox
-$campoHttps.Location = New-Object System.Drawing.Point(297, 688)
+$campoHttps.Location = New-Object System.Drawing.Point(297, 712)
 $campoHttps.Size = New-Object System.Drawing.Size(377, 30)
 $campoHttps.ReadOnly = $true
 $campoHttps.BackColor = [System.Drawing.ColorTranslator]::FromHtml("#EDF4FA")
@@ -634,20 +641,20 @@ $forma.Controls.Add($campoHttps)
 
 $botonCopiarHttps = New-Object System.Windows.Forms.Button
 $botonCopiarHttps.Text = "Copiar"
-$botonCopiarHttps.Location = New-Object System.Drawing.Point(686, 686)
+$botonCopiarHttps.Location = New-Object System.Drawing.Point(686, 710)
 $botonCopiarHttps.Size = New-Object System.Drawing.Size(126, 34)
 Aplicar-EstiloBoton $botonCopiarHttps $false
 $forma.Controls.Add($botonCopiarHttps)
 
 $etiquetaRegistro = New-Object System.Windows.Forms.Label
 $etiquetaRegistro.Text = "Actividad:"
-$etiquetaRegistro.Location = New-Object System.Drawing.Point(24, 744)
+$etiquetaRegistro.Location = New-Object System.Drawing.Point(24, 768)
 $etiquetaRegistro.Size = New-Object System.Drawing.Size(250, 27)
 $etiquetaRegistro.ForeColor = $colorTexto
 $forma.Controls.Add($etiquetaRegistro)
 
 $cajaRegistro = New-Object System.Windows.Forms.TextBox
-$cajaRegistro.Location = New-Object System.Drawing.Point(24, 777)
+$cajaRegistro.Location = New-Object System.Drawing.Point(24, 801)
 $cajaRegistro.Size = New-Object System.Drawing.Size(788, 52)
 $cajaRegistro.Multiline = $true
 $cajaRegistro.ReadOnly = $true
