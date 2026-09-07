@@ -449,7 +449,7 @@ function Mostrar-GuiaGmm([string]$titulo = "Guia de inicio") {
 
 $forma = New-Object System.Windows.Forms.Form
 $forma.Text = "GMM Server · Te la tengo"
-$forma.Size = New-Object System.Drawing.Size(850, 930)
+$forma.Size = New-Object System.Drawing.Size(850, 1030)
 $forma.StartPosition = "CenterScreen"
 $forma.FormBorderStyle = "FixedDialog"
 $forma.MaximizeBox = $false
@@ -655,7 +655,7 @@ $forma.Controls.Add($etiquetaRegistro)
 
 $cajaRegistro = New-Object System.Windows.Forms.TextBox
 $cajaRegistro.Location = New-Object System.Drawing.Point(24, 801)
-$cajaRegistro.Size = New-Object System.Drawing.Size(788, 52)
+$cajaRegistro.Size = New-Object System.Drawing.Size(788, 130)
 $cajaRegistro.Multiline = $true
 $cajaRegistro.ReadOnly = $true
 $cajaRegistro.ScrollBars = "Vertical"
