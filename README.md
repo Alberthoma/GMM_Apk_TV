@@ -43,6 +43,18 @@ El unico repositorio autorizado es:
 Los ejecutables compilados se publican como archivos de GitHub Releases, no
 dentro del arbol de codigo fuente.
 
+### Protocolo obligatorio antes de publicar
+
+1. Se revisan los archivos modificados y los archivos nuevos.
+2. Un archivo nuevo (por ejemplo, una imagen, un APK o un script) solo se
+   incluye cuando se confirma expresamente que debe formar parte del proyecto.
+3. Se prueban los cambios y se crea un commit local con una descripción clara.
+4. Solo después se ejecuta `1 - SUBIR a GitHub (push).bat`.
+
+El BAT únicamente ejecuta `git push`: no hace `pull`, no descarga cambios del
+repositorio, no borra carpetas y no añade archivos nuevos por su cuenta. Si la
+publicación es rechazada, se detiene sin modificar la carpeta local.
+
 ## Privacidad
 
 No se deben confirmar claves, tokens, credenciales, catalogos ni rutas locales.
