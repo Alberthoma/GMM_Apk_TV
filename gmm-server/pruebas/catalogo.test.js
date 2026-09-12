@@ -168,3 +168,34 @@ test("prioriza el identificador TMDb confirmado por Cinemateca sin necesitar ffp
   const catalogo = await gestor.escanear();
   assert.deepEqual(catalogo.peliculas[0].tmdb, { id: 157336, tipo: "movie" });
 });
+
+test("incorpora un comprobante de Cinemateca a un archivo estable de un catálogo anterior", async function (t) {
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), "gmm-cinemateca-migracion-"));
+  const series = path.join(base, "Series");
+  const archivo = path.join(series, "Foundation.S02E03.mkv");
+  await fs.mkdir(series, { recursive: true });
+  await fs.writeFile(archivo, "video");
+  t.after(async function () { await fs.rm(base, { recursive: true, force: true }); });
+
+  const config = configuracion(base, series);
+  config.carpetas[0].nombre = "Series";
+  const gestor = new GestorCatalogo(config, {
+    sondear: async function () { return { codecVideo: "h264", codecAudio: "aac" }; }
+  });
+  await gestor.iniciar();
+  await gestor.escanear();
+  await gestor.escanear();
+  assert.equal(gestor.obtenerPublico().peliculas[0].tmdb, null);
+
+  const respaldos = path.join(series, "respaldo", "respaldo metadatos");
+  await fs.mkdir(respaldos, { recursive: true });
+  await fs.writeFile(path.join(respaldos, "foundation.metadatos.json"), JSON.stringify({
+    outputFile: archivo,
+    requestedMetadata: { cinemateca_tmdb_id: "TV_94997_S2E3" }
+  }));
+
+  await gestor.escanear();
+  assert.deepEqual(gestor.obtenerPublico().peliculas[0].tmdb, {
+    id: 94997, tipo: "tv", temporada: 2, episodio: 3
+  });
+});

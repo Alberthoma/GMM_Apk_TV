@@ -260,7 +260,10 @@ class GestorCatalogo {
       nueva.compatibilidad = anterior.compatibilidad;
       nueva.codecVideo = anterior.codecVideo || null;
       nueva.codecAudio = anterior.codecAudio || null;
-      nueva.tmdb = anterior.tmdb || null;
+      /* El comprobante de Cinemateca se carga antes de esta comprobación y
+         puede ser nuevo aunque el vídeo no haya cambiado. No lo sustituyas
+         por el valor vacío de un catálogo creado con una versión anterior. */
+      nueva.tmdb = nueva.tmdb || anterior.tmdb || null;
       nueva.tmdbRevisado = true;
       return;
     }
