@@ -1311,7 +1311,7 @@ a.plataforma:hover { border-color: #2ee6a8; transform: translateY(-1px); text-de
   <footer class="pie">
     <span>givemymovies · datos de disponibilidad vía TMDB / JustWatch</span>
     <span>Tus listas se guardan en este navegador — inicia sesión para llevarlas a otros</span>
-<span id="version-app">V GMM 0054</span>
+<span id="version-app">V GMM 0055</span>
   </footer>
 </div>
 
@@ -4246,6 +4246,7 @@ GMM.app = (function () {
     servidorPorId: {},
     servidorIndice: null, // { porId, porTitulo } — para la insignia "Te la tengo" de las sugerencias
     entradasServidor: null,
+    entradasServidorClaveTmdb: null,
     busquedaServidor: "",
     marcada: -1,          // sugerencia resaltada con el teclado
     /* Método Descubrir */
@@ -5312,6 +5313,7 @@ GMM.app = (function () {
     GMM.servidor.escanear().then(function (catalogo) {
       estado.catalogoServidor = catalogo;
       estado.entradasServidor = null;
+      estado.entradasServidorClaveTmdb = null;
       indexarCatalogoServidor(catalogo);
       GMM.ui.refrescarCabecera();
       if (estado.vista === "servidor") pintarServidor();
@@ -5386,10 +5388,17 @@ GMM.app = (function () {
       estado.catalogoServidor = catalogo;
       indexarCatalogoServidor(catalogo);   // también rellena estado.servidorPorId
       GMM.ui.refrescarCabecera();
-      var obtenerEntradas = estado.entradasServidor
+      /* Una lista creada en modo demo o con otra clave no puede reutilizarse:
+         sus fichas básicas no tienen poster_path aunque el catálogo ya traiga
+         el ID exacto de TMDb. */
+      var claveTmdbActual = GMM.tmdb.clave();
+      var reutilizarEntradas = estado.entradasServidor &&
+        estado.entradasServidorClaveTmdb === claveTmdbActual;
+      var obtenerEntradas = reutilizarEntradas
         ? Promise.resolve(estado.entradasServidor)
         : enriquecerServidor(catalogo.peliculas || []).then(function (entradas) {
             estado.entradasServidor = entradas;
+            estado.entradasServidorClaveTmdb = claveTmdbActual;
             return entradas;
           });
       return obtenerEntradas.then(function (entradas) {
@@ -6411,6 +6420,11 @@ GMM.app = (function () {
     $("btnGuardarClave").addEventListener("click", function () {
       var valor = $("entradaClave").value.trim();
       GMM.tmdb.guardarClave(valor);
+      /* Las fichas de «Te la tengo» dependen de esta clave. Obliga a volver
+         a pedir /tv/{id} y /movie/{id}, en vez de conservar tarjetas sin
+         carátula creadas antes de guardar la configuración. */
+      estado.entradasServidor = null;
+      estado.entradasServidorClaveTmdb = null;
       GMM.omdb.guardarClave($("entradaClaveOmdb").value);
       GMM.drive.guardarClientId($("entradaGdrive").value);
       if (!guardarServidorDesdeFormulario()) return;
@@ -6418,6 +6432,7 @@ GMM.app = (function () {
       cerrarCapa("capaAjustes");
       GMM.ui.refrescarCabecera();
       montarPlataformas();
+      if (estado.vista === "servidor") pintarServidor();
       GMM.ui.aviso(valor ? "Ajustes guardados. Ya usas datos en vivo." : "Ajustes guardados. La app usa el modo demo.", "ok");
     });
 
