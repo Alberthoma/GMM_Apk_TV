@@ -148,3 +148,23 @@ test("publica serie, temporada y episodio sin revelar la ruta", async function (
   assert.equal(catalogo.peliculas[0].episodio, 3);
   assert.equal(JSON.stringify(catalogo).includes(series), false);
 });
+
+test("prioriza el identificador TMDb confirmado por Cinemateca sin necesitar ffprobe", async function (t) {
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), "gmm-cinemateca-"));
+  const peliculas = path.join(base, "Peliculas");
+  const archivo = path.join(peliculas, "Interestelar (2014).mkv");
+  const respaldos = path.join(peliculas, "respaldo", "respaldo metadatos");
+  await fs.mkdir(respaldos, { recursive: true });
+  await fs.writeFile(archivo, "video");
+  await fs.writeFile(path.join(respaldos, "interestelar.metadatos.json"), JSON.stringify({
+    outputFile: archivo,
+    requestedMetadata: { cinemateca_tmdb_id: "157336" }
+  }));
+  t.after(async function () { await fs.rm(base, { recursive: true, force: true }); });
+
+  const gestor = new GestorCatalogo(configuracion(base, peliculas), { sondear: async function () { return null; } });
+  await gestor.iniciar();
+  await gestor.escanear();
+  const catalogo = await gestor.escanear();
+  assert.deepEqual(catalogo.peliculas[0].tmdb, { id: 157336, tipo: "movie" });
+});

@@ -4,7 +4,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { analizarNombreArchivo, analizarTipoVideo, esArchivoDeVideo } = require("./nombres");
-const { evaluarCompatibilidad, sondearArchivo } = require("./compatibilidad");
+const { evaluarCompatibilidad, sondearArchivo, tmdbDeEtiquetas } = require("./compatibilidad");
 
 const fsPromesas = fs.promises;
 const VERSION_CATALOGO = 1;
@@ -62,6 +62,30 @@ async function guardarCatalogo(rutaCatalogo, catalogo) {
     await fsPromesas.rename(temporal, rutaCatalogo);
   }
 }
+
+function claveRuta(ruta) {
+  return String(ruta || "").replace(/\\/g, "/").toLocaleLowerCase("es");
+}
+
+/* Cinemateca conserva un comprobante JSON por cada archivo que etiqueta.
+   Leerlo localmente evita adivinar el título y no necesita FFprobe. */
+async function referenciasCinemateca(raiz) {
+  const directorio = path.join(raiz.ruta, "respaldo", "respaldo metadatos");
+  const referencias = new Map();
+  let archivos;
+  try { archivos = await fsPromesas.readdir(directorio, { withFileTypes: true }); }
+  catch (error) { return referencias; }
+  for (const archivo of archivos) {
+    if (!archivo.isFile() || !/\.metadatos\.json$/i.test(archivo.name)) continue;
+    try {
+      const datos = JSON.parse(await fsPromesas.readFile(path.join(directorio, archivo.name), "utf8"));
+      const tmdb = tmdbDeEtiquetas(Object.assign({}, datos.newMetadata || {}, datos.requestedMetadata || {}));
+      if (tmdb && datos.outputFile) referencias.set(claveRuta(datos.outputFile), tmdb);
+    } catch (error) { /* Un respaldo incompleto nunca bloquea el catálogo. */ }
+  }
+  return referencias;
+}
+
 
 async function recorrerCarpeta(raiz, rutaActual, configuracion, encontrados, avisos) {
   let entradas;
@@ -246,7 +270,7 @@ class GestorCatalogo {
     }
     nueva.codecVideo = sondeo.codecVideo || null;
     nueva.codecAudio = sondeo.codecAudio || null;
-    nueva.tmdb = sondeo.tmdb || (anterior && anterior.tmdb) || null;
+    nueva.tmdb = sondeo.tmdb || nueva.tmdb || (anterior && anterior.tmdb) || null;
     nueva.tmdbRevisado = true;
     nueva.compatibilidad = evaluarCompatibilidad({
       extension: nueva.extension,
@@ -292,8 +316,14 @@ class GestorCatalogo {
 
       if (disponible) {
         const encontradas = [];
+        const referencias = await referenciasCinemateca(raiz);
         await recorrerCarpeta(raiz, raiz.ruta, this.configuracion, encontradas, avisos);
         for (const nueva of encontradas) {
+          const tmdb = referencias.get(claveRuta(nueva.ruta));
+          if (tmdb) {
+            nueva.tmdb = tmdb;
+            if (tmdb.tipo === "tv") nueva.tipoMedia = "tv";
+          }
           const anterior = anteriores.get(nueva.id);
           await this._probarCompatibilidad(nueva, anterior);
           peliculas.push(conservarDatosEnriquecidos(nueva, anterior, ahora));
