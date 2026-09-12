@@ -228,10 +228,15 @@ class GestorCatalogo {
     const estable = Boolean(anterior &&
       anterior.tamanoBytes === nueva.tamanoBytes &&
       anterior.modificadoEn === nueva.modificadoEn);
-    if (estable && anterior.compatibilidad) {
+    /* Catálogos anteriores no tienen tmdbRevisado: se consultan una vez para
+       migrar sus etiquetas. Después solo se repite si el archivo cambia, que
+       es justo lo que ocurre cuando Cinemateca actualiza sus metadatos. */
+    if (estable && anterior.compatibilidad && anterior.tmdbRevisado) {
       nueva.compatibilidad = anterior.compatibilidad;
       nueva.codecVideo = anterior.codecVideo || null;
       nueva.codecAudio = anterior.codecAudio || null;
+      nueva.tmdb = anterior.tmdb || null;
+      nueva.tmdbRevisado = true;
       return;
     }
     const sondeo = await this.sondear(nueva.ruta);
@@ -241,6 +246,8 @@ class GestorCatalogo {
     }
     nueva.codecVideo = sondeo.codecVideo || null;
     nueva.codecAudio = sondeo.codecAudio || null;
+    nueva.tmdb = sondeo.tmdb || (anterior && anterior.tmdb) || null;
+    nueva.tmdbRevisado = true;
     nueva.compatibilidad = evaluarCompatibilidad({
       extension: nueva.extension,
       codecVideo: sondeo.codecVideo,

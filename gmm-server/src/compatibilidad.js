@@ -22,6 +22,22 @@ function evaluarCompatibilidad(datos) {
   return CONTENEDORES_REPRODUCIBLES.includes(extension) ? "compatible" : "remux";
 }
 
+/* Cinemateca guarda su referencia oficial en etiquetas del contenedor. Esta
+   lectura admite las dos formas que ya escribe: un id numérico para cine y
+   TV_<serie>_S<temporada>E<episodio> para episodios. */
+function tmdbDeEtiquetas(etiquetas) {
+  const tags = etiquetas || {};
+  const valor = Object.keys(tags).reduce(function (encontrado, clave) {
+    if (encontrado) return encontrado;
+    if (/^(?:cinemateca_)?tmdb_id$/i.test(clave)) return String(tags[clave] || "");
+    return "";
+  }, "") || ((String(tags.comment || tags.COMMENT || "").match(/(?:^|;)\s*TMDB_ID=([^;\s]+)/i) || [])[1] || "");
+  const episodio = /^TV_(\d+)_S(\d+)E(\d+)$/i.exec(valor);
+  if (episodio) return { id: Number(episodio[1]), tipo: "tv", temporada: Number(episodio[2]), episodio: Number(episodio[3]) };
+  if (/^\d+$/.test(valor) && Number(valor) > 0) return { id: Number(valor), tipo: "movie" };
+  return null;
+}
+
 /* Impura a propósito: llama a ffprobe como proceso aparte. Nunca lanza — si el binario no
    existe o el archivo no se puede analizar, resuelve null y el catálogo se queda tal como
    estaba antes de este añadido (sin insignia de compatibilidad, archivo servido tal cual). */
@@ -34,6 +50,7 @@ function sondearArchivo(rutaFFprobe, rutaArchivo, ejecutorPersonalizado) {
         "-v", "error",
         "-print_format", "json",
         "-show_streams",
+        "-show_format",
         rutaArchivo
       ]);
     } catch (error) {
@@ -58,10 +75,13 @@ function sondearArchivo(rutaFFprobe, rutaArchivo, ejecutorPersonalizado) {
         const streams = Array.isArray(datos.streams) ? datos.streams : [];
         const video = streams.find(function (s) { return s.codec_type === "video"; });
         const audio = streams.find(function (s) { return s.codec_type === "audio"; });
-        terminar({
+        const resultado = {
           codecVideo: video ? video.codec_name : null,
           codecAudio: audio ? audio.codec_name : null
-        });
+        };
+        const tmdb = tmdbDeEtiquetas(datos.format && datos.format.tags);
+        if (tmdb) resultado.tmdb = tmdb;
+        terminar(resultado);
       } catch (error) {
         terminar(null);
       }
@@ -74,5 +94,6 @@ module.exports = {
   CODECS_VIDEO_COMPATIBLES,
   CONTENEDORES_REPRODUCIBLES,
   evaluarCompatibilidad,
-  sondearArchivo
+  sondearArchivo,
+  tmdbDeEtiquetas
 };

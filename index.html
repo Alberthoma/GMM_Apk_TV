@@ -1311,7 +1311,7 @@ a.plataforma:hover { border-color: #2ee6a8; transform: translateY(-1px); text-de
   <footer class="pie">
     <span>givemymovies · datos de disponibilidad vía TMDB / JustWatch</span>
     <span>Tus listas se guardan en este navegador — inicia sesión para llevarlas a otros</span>
-<span id="version-app">V GMM 0052</span>
+<span id="version-app">V GMM 0053</span>
   </footer>
 </div>
 
@@ -5051,8 +5051,16 @@ GMM.app = (function () {
     return item && (item.tipoMedia === "tv" || item.tmdb && item.tmdb.tipo === "tv") ? "tv" : "movie";
   }
 
+
+  /* Un episodio no es el título que debe buscar TMDb. Para TV usamos el
+     nombre de la serie que el servidor ya extrajo de la carpeta; para cine,
+     el título y año detectados del propio archivo. */
+  function consultaServidor(item) {
+    if (tipoServidor(item) === "tv" && item.serieTitulo) return item.serieTitulo;
+    return item.tituloDetectado || item.nombreArchivo || "";
+  }
   function elegirFichaServidor(item, candidatas) {
-    var titulo = GMM.util.normalizar(item.tituloDetectado || "");
+    var titulo = GMM.util.normalizar(consultaServidor(item));
     var ano = String(item.anioDetectado || "");
     var lista = (candidatas || []).filter(function (p) { return p && p.id; });
     lista.sort(function (a, b) {
@@ -5079,7 +5087,7 @@ GMM.app = (function () {
           .then(function (ficha) { return { item: item, ficha: ficha || fichaBasicaServidor(item) }; });
       }
       if (!GMM.tmdb.hayClave()) return { item: item, ficha: fichaBasicaServidor(item) };
-      return GMM.tmdb.buscarTitulos(item.tituloDetectado || item.nombreArchivo || "", tipo)
+      return GMM.tmdb.buscarTitulos(consultaServidor(item), tipo)
         .then(function (candidatas) { return { item: item, ficha: elegirFichaServidor(item, candidatas) }; });
     }).then(function (resultado) {
       return resultado.filter(Boolean);

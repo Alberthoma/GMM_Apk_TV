@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { evaluarCompatibilidad, sondearArchivo } = require("../src/compatibilidad");
+const { evaluarCompatibilidad, sondearArchivo, tmdbDeEtiquetas } = require("../src/compatibilidad");
 
 function procesoFalso({ salida, codigo }) {
   const proceso = new EventEmitter();
@@ -36,7 +36,17 @@ test("evaluarCompatibilidad: sin datos de códec (no se pudo analizar el stream)
   assert.equal(evaluarCompatibilidad({ extension: ".mp4", codecVideo: null, codecAudio: null }), "transcodificar");
 });
 
+test("lee las referencias TMDb que Cinemateca incrusta en películas y episodios", function () {
+  assert.deepEqual(tmdbDeEtiquetas({ cinemateca_tmdb_id: "157336" }), { id: 157336, tipo: "movie" });
+  assert.deepEqual(tmdbDeEtiquetas({ COMMENT: "TMDB_ID=TV_1396_S2E3; Estado=Actualizada" }), {
+    id: 1396, tipo: "tv", temporada: 2, episodio: 3
+  });
+  assert.equal(tmdbDeEtiquetas({ title: "Sin id" }), null);
+});
+
 test("sondearArchivo: interpreta la salida de ffprobe y separa vídeo de audio", async function (t) {
+
+
   const salida = JSON.stringify({
     streams: [
       { codec_type: "audio", codec_name: "ac3" },
