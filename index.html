@@ -1311,7 +1311,7 @@ a.plataforma:hover { border-color: #2ee6a8; transform: translateY(-1px); text-de
   <footer class="pie">
     <span>givemymovies · datos de disponibilidad vía TMDB / JustWatch</span>
     <span>Tus listas se guardan en este navegador — inicia sesión para llevarlas a otros</span>
-<span id="version-app">V GMM 0051</span>
+<span id="version-app">V GMM 0052</span>
   </footer>
 </div>
 
@@ -5032,14 +5032,23 @@ GMM.app = (function () {
   }
 
   function fichaBasicaServidor(item) {
+    var tipo = tipoServidor(item);
     return {
       id: null,
-      tipo: "movie",
+      tipo: tipo,
       title: item.tituloDetectado || item.nombreArchivo || "Sin título",
-      release_date: item.anioDetectado ? String(item.anioDetectado) + "-01-01" : "",
+      release_date: tipo === "movie" && item.anioDetectado ? String(item.anioDetectado) + "-01-01" : "",
+      first_air_date: tipo === "tv" && item.anioDetectado ? String(item.anioDetectado) + "-01-01" : "",
       poster_path: null,
       original_language: ""
     };
+  }
+
+  /* El servidor identifica cada archivo como película o serie. Centralizar la
+     lectura evita que las fichas sin TMDB, las ya enriquecidas y el filtro de
+     la vista lleguen a conclusiones distintas. */
+  function tipoServidor(item) {
+    return item && (item.tipoMedia === "tv" || item.tmdb && item.tmdb.tipo === "tv") ? "tv" : "movie";
   }
 
   function elegirFichaServidor(item, candidatas) {
@@ -5058,18 +5067,19 @@ GMM.app = (function () {
     var elegida = lista[0];
     if (!elegida) return fichaBasicaServidor(item);
     elegida = Object.assign({}, elegida);
-    elegida.tipo = "movie";
+    elegida.tipo = tipoServidor(item);
     return elegida;
   }
 
   function enriquecerServidor(items) {
     return GMM.util.enLotes(items || [], GMM.config.CONCURRENCIA, function (item) {
+      var tipo = tipoServidor(item);
       if (item.tmdb && item.tmdb.id) {
-        return GMM.tmdb.ficha(item.tmdb.id, item.tmdb.tipo || "movie")
+        return GMM.tmdb.ficha(item.tmdb.id, tipo)
           .then(function (ficha) { return { item: item, ficha: ficha || fichaBasicaServidor(item) }; });
       }
       if (!GMM.tmdb.hayClave()) return { item: item, ficha: fichaBasicaServidor(item) };
-      return GMM.tmdb.buscarPeliculas(item.tituloDetectado || item.nombreArchivo || "")
+      return GMM.tmdb.buscarTitulos(item.tituloDetectado || item.nombreArchivo || "", tipo)
         .then(function (candidatas) { return { item: item, ficha: elegirFichaServidor(item, candidatas) }; });
     }).then(function (resultado) {
       return resultado.filter(Boolean);
@@ -5259,16 +5269,13 @@ GMM.app = (function () {
     estado.servidorIndice = { porId: porId, porTitulo: porTitulo };
   }
 
-  /* Busca cualquier ficha de TMDB en el catálogo ya indexado. Antes esta
-     comprobación dependía de que la vista activa fuera la búsqueda por título;
-     por eso una película aparecía como disponible en las sugerencias, pero no
-     en Tendencias, Ver más, Descubrir, listas o filmografías. El catálogo de
-     GMM Server por ahora contiene películas, así que las series se omiten. */
+  /* Busca cualquier ficha de TMDB en el catálogo ya indexado, ya sea película
+     o serie, para que las sugerencias y las demás vistas usen el mismo tipo
+     que «Te la tengo». */
   function buscarEnServidor(item) {
     if (!item || !estado.servidorIndice) return null;
     var tipoMedia = item.tipo || item.media_type || estado.tipo || "movie";
     tipoMedia = tipoMedia === "tv" ? "tv" : "movie";
-    if (tipoMedia !== "movie") return null;
     var directo = estado.servidorIndice.porId[tipoMedia + ":" + item.id];
     if (directo) return directo;
     var candidatos = estado.servidorIndice.porTitulo[GMM.util.normalizar(item.title || item.name || "")];
@@ -5311,7 +5318,10 @@ GMM.app = (function () {
   }
 
   function pintarCatalogoServidor(catalogo, entradas) {
-    var todas = entradas;
+    var todas = entradas.filter(function (entrada) {
+      return tipoServidor(entrada.item) === estado.tipo;
+    });
+    entradas = todas;
     var textoLocal = GMM.util.normalizar(estado.busquedaServidor || "");
     entradas = entradas.filter(function (entrada) {
       var ficha = entrada.ficha || {};
@@ -5329,8 +5339,11 @@ GMM.app = (function () {
       if (estado.anoHasta && ano > Number(estado.anoHasta)) return false;
       return true;
     });
-    var disponibles = catalogo.resumen && Number(catalogo.resumen.disponibles) || 0;
-    var copiandose = catalogo.resumen && Number(catalogo.resumen.copiandose) || 0;
+    var entradasCatalogo = (catalogo.peliculas || []).filter(function (item) {
+      return tipoServidor(item) === estado.tipo;
+    });
+    var disponibles = entradasCatalogo.filter(function (item) { return item.disponible; }).length;
+    var copiandose = entradasCatalogo.filter(function (item) { return item.estadoArchivo === "copiandose"; }).length;
     var nota = disponibles + " disponible" + (disponibles === 1 ? "" : "s") +
       (copiandose ? " · " + copiandose + " terminando de copiar" : "") + ".";
     var html = '<div class="seccion-cab"><h3 class="seccion-tit">&#9654; Te la tengo <small>' +
@@ -5908,6 +5921,10 @@ GMM.app = (function () {
       reflejar();
       guardarPrefs();
       if (estado.vista === "inicio") { montarCarruseles(); refrescarCarrusel(); }
+      if (estado.vista === "servidor") {
+        pintarServidor();
+        return;
+      }
       relanzarSiProcede();      // si ya había resultados, rehace la búsqueda con el nuevo tipo
     });
 
