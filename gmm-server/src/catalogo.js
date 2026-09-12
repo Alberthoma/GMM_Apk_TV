@@ -166,6 +166,7 @@ function catalogoPublico(catalogo) {
       copiandose: catalogo.peliculas.filter(function (pelicula) {
         return pelicula.estadoArchivo === "copiandose";
       }).length,
+      identificadosTmdb: catalogo.peliculas.filter(function (pelicula) { return pelicula.tmdb && pelicula.tmdb.id; }).length,
       carpetas: catalogo.raices.length
     },
     carpetas: catalogo.raices.map(function (raiz) {

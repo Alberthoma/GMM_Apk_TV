@@ -1311,7 +1311,7 @@ a.plataforma:hover { border-color: #2ee6a8; transform: translateY(-1px); text-de
   <footer class="pie">
     <span>givemymovies · datos de disponibilidad vía TMDB / JustWatch</span>
     <span>Tus listas se guardan en este navegador — inicia sesión para llevarlas a otros</span>
-<span id="version-app">V GMM 0053</span>
+<span id="version-app">V GMM 0054</span>
   </footer>
 </div>
 
@@ -5352,8 +5352,10 @@ GMM.app = (function () {
     });
     var disponibles = entradasCatalogo.filter(function (item) { return item.disponible; }).length;
     var copiandose = entradasCatalogo.filter(function (item) { return item.estadoArchivo === "copiandose"; }).length;
+    var identificados = entradasCatalogo.filter(function (item) { return item.tmdb && item.tmdb.id; }).length;
     var nota = disponibles + " disponible" + (disponibles === 1 ? "" : "s") +
-      (copiandose ? " · " + copiandose + " terminando de copiar" : "") + ".";
+      (copiandose ? " · " + copiandose + " terminando de copiar" : "") +
+      " · " + identificados + " con ID TMDb confirmado.";
     var html = '<div class="seccion-cab"><h3 class="seccion-tit">&#9654; Te la tengo <small>' +
       entradas.length + (entradas.length !== todas.length ? ' de ' + todas.length : '') + '</small></h3>' +
       '<button class="boton-sec" data-refrescar-servidor>&#8635; Actualizar</button></div>' +
